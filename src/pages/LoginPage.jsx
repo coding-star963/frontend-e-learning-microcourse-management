@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Alert from '../components/Alert';
 import AuthLayout from '../components/AuthLayout';
@@ -55,14 +55,9 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
-              Password
-            </label>
-            <Link to="/forgot-password" className="text-sm font-semibold text-teal-700 hover:text-teal-800">
-              Forgot password?
-            </Link>
-          </div>
+          <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+            Password
+          </label>
           <div className="mt-2">
               <input
                 id="password"
