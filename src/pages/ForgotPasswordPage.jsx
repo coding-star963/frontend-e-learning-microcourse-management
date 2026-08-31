@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import Alert from '../components/Alert';
+import AuthLayout from '../components/AuthLayout';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -25,63 +27,47 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <AuthLayout
+      title="Reset your password"
+      subtitle="Enter your email address and we will send reset instructions."
+    >
+      <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+        {message && <Alert type="success">{message}</Alert>}
+        {error && <Alert>{error}</Alert>}
+
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your password.
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {message && (
-            <div className="rounded-md bg-green-50 p-4">
-              <div className="text-sm text-green-700">{message}</div>
-            </div>
-          )}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
+          <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+            Email address
+          </label>
+          <div className="mt-2">
               <input
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+              className="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
+              placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-            </div>
           </div>
+        </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Sending...' : 'Send reset link'}
-            </button>
-          </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex w-full justify-center rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? 'Sending...' : 'Send reset link'}
+        </button>
 
-          <div className="text-sm text-center">
-            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Back to sign in
-            </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="text-center text-sm">
+          <Link to="/login" className="font-semibold text-teal-700 hover:text-teal-800">
+            Back to sign in
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

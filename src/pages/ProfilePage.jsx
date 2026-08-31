@@ -1,5 +1,10 @@
 import { useState } from 'react';
+import Alert from '../components/Alert';
+import AppShell from '../components/AppShell';
 import { useAuth } from '../hooks/useAuth';
+
+const inputClass =
+  'mt-2 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100';
 
 export default function ProfilePage() {
   const { user, updateProfile, updatePassword, updatePhoto } = useAuth();
@@ -76,178 +81,160 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Profile Settings</h1>
-
-      {/* Profile Information */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Profile Information</h2>
-        {profileMessage && (
-          <div className="rounded-md bg-green-50 p-4 mb-4">
-            <div className="text-sm text-green-700">{profileMessage}</div>
-          </div>
-        )}
-        {profileError && (
-          <div className="rounded-md bg-red-50 p-4 mb-4">
-            <div className="text-sm text-red-700">{profileError}</div>
-          </div>
-        )}
-        <form onSubmit={handleProfileUpdate}>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-          </div>
-          <div className="mt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Profile Photo */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Profile Photo</h2>
-        {photoMessage && (
-          <div className="rounded-md bg-green-50 p-4 mb-4">
-            <div className="text-sm text-green-700">{photoMessage}</div>
-          </div>
-        )}
-        {photoError && (
-          <div className="rounded-md bg-red-50 p-4 mb-4">
-            <div className="text-sm text-red-700">{photoError}</div>
-          </div>
-        )}
-        <div className="flex items-center space-x-6">
-          <div className="flex-shrink-0">
+    <AppShell title="Profile settings" eyebrow="Account">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
+        <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-4">
             {user?.profile_photo ? (
-              <img
-                className="h-20 w-20 rounded-full object-cover"
-                src={user.profile_photo}
-                alt={user.name}
-              />
+              <img className="h-20 w-20 rounded-lg object-cover" src={user.profile_photo} alt={user.name} />
             ) : (
-              <div className="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center">
-                <span className="text-2xl font-medium text-gray-700">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </span>
+              <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-slate-950 text-2xl font-bold text-white">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
             )}
-          </div>
-          <form onSubmit={handlePhotoUpdate} className="flex-1">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setPhoto(e.target.files[0])}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-            />
-            <div className="mt-4">
-              <button
-                type="submit"
-                disabled={loading || !photo}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-              >
-                {loading ? 'Uploading...' : 'Upload Photo'}
-              </button>
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-bold text-slate-950">{user?.name}</h2>
+              <p className="break-words text-sm text-slate-500">{user?.email}</p>
+              <p className="mt-2 inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold capitalize text-teal-700">
+                {user?.role}
+              </p>
             </div>
-          </form>
-        </div>
-      </div>
+          </div>
 
-      {/* Password Update */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Update Password</h2>
-        {passwordMessage && (
-          <div className="rounded-md bg-green-50 p-4 mb-4">
-            <div className="text-sm text-green-700">{passwordMessage}</div>
-          </div>
-        )}
-        {passwordError && (
-          <div className="rounded-md bg-red-50 p-4 mb-4">
-            <div className="text-sm text-red-700">{passwordError}</div>
-          </div>
-        )}
-        <form onSubmit={handlePasswordUpdate}>
-          <div className="space-y-4">
+          <form onSubmit={handlePhotoUpdate} className="mt-6 space-y-4">
+            {photoMessage && <Alert type="success">{photoMessage}</Alert>}
+            {photoError && <Alert>{photoError}</Alert>}
             <div>
-              <label htmlFor="current_password" className="block text-sm font-medium text-gray-700">
-                Current Password
+              <label htmlFor="photo" className="block text-sm font-semibold text-slate-700">
+                Profile photo
               </label>
               <input
-                type="password"
-                name="current_password"
-                id="current_password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                id="photo"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhoto(e.target.files[0])}
+                className="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
               />
             </div>
-            <div>
-              <label htmlFor="new_password" className="block text-sm font-medium text-gray-700">
-                New Password
-              </label>
-              <input
-                type="password"
-                name="new_password"
-                id="new_password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="new_password_confirmation" className="block text-sm font-medium text-gray-700">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                name="new_password_confirmation"
-                id="new_password_confirmation"
-                value={newPasswordConfirmation}
-                onChange={(e) => setNewPasswordConfirmation(e.target.value)}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-          </div>
-          <div className="mt-4">
             <button
               type="submit"
-              disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              disabled={loading || !photo}
+              className="w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? 'Updating...' : 'Update Password'}
+              {loading ? 'Uploading...' : 'Upload photo'}
             </button>
-          </div>
-        </form>
+          </form>
+        </aside>
+
+        <div className="space-y-6">
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="border-b border-slate-200 pb-5">
+              <h2 className="text-lg font-bold text-slate-950">Profile information</h2>
+              <p className="mt-1 text-sm text-slate-600">Keep your visible account details accurate.</p>
+            </div>
+
+            <form onSubmit={handleProfileUpdate} className="mt-6 space-y-5">
+              {profileMessage && <Alert type="success">{profileMessage}</Alert>}
+              {profileError && <Alert>{profileError}</Alert>}
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-semibold text-slate-700">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Saving...' : 'Save changes'}
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="border-b border-slate-200 pb-5">
+              <h2 className="text-lg font-bold text-slate-950">Password</h2>
+              <p className="mt-1 text-sm text-slate-600">Use a strong password to protect your account.</p>
+            </div>
+
+            <form onSubmit={handlePasswordUpdate} className="mt-6 space-y-5">
+              {passwordMessage && <Alert type="success">{passwordMessage}</Alert>}
+              {passwordError && <Alert>{passwordError}</Alert>}
+              <div>
+                <label htmlFor="current_password" className="block text-sm font-semibold text-slate-700">
+                  Current password
+                </label>
+                <input
+                  type="password"
+                  name="current_password"
+                  id="current_password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label htmlFor="new_password" className="block text-sm font-semibold text-slate-700">
+                    New password
+                  </label>
+                  <input
+                    type="password"
+                    name="new_password"
+                    id="new_password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="new_password_confirmation" className="block text-sm font-semibold text-slate-700">
+                    Confirm new password
+                  </label>
+                  <input
+                    type="password"
+                    name="new_password_confirmation"
+                    id="new_password_confirmation"
+                    value={newPasswordConfirmation}
+                    onChange={(e) => setNewPasswordConfirmation(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-lg bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Updating...' : 'Update password'}
+              </button>
+            </form>
+          </section>
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
