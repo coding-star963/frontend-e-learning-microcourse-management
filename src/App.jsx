@@ -5,6 +5,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import DashboardPage from './pages/DashboardPage';
+import UserListPage from './pages/UserListPage';
+import UserCreatePage from './pages/UserCreatePage';
+import UserEditPage from './pages/UserEditPage';
+import UserDetailPage from './pages/UserDetailPage';
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -35,6 +39,26 @@ function AppRoutes() {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <DashboardPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/users" element={
+        <ProtectedRoute allowedRoles={['administrator']}>
+          <UserListPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/users/create" element={
+        <ProtectedRoute allowedRoles={['administrator']}>
+          <UserCreatePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/users/:id" element={
+        <ProtectedRoute allowedRoles={['administrator']}>
+          <UserDetailPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/users/:id/edit" element={
+        <ProtectedRoute allowedRoles={['administrator']}>
+          <UserEditPage />
         </ProtectedRoute>
       } />
       <Route path="/profile" element={

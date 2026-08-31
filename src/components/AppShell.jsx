@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: 'D' },
+  { to: '/users', label: 'Users', icon: 'U', adminOnly: true },
   { to: '/profile', label: 'Profile', icon: 'P' },
 ];
 
@@ -30,25 +31,27 @@ export default function AppShell({ title, eyebrow, children }) {
           </Link>
 
           <nav className="mt-8 space-y-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  [
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition',
-                    isActive
-                      ? 'bg-teal-50 text-teal-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
-                  ].join(' ')
-                }
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-md border border-current/15 text-xs">
-                  {item.icon}
-                </span>
-                {item.label}
-              </NavLink>
-            ))}
+            {navItems
+              .filter((item) => !item.adminOnly || user?.role === 'administrator')
+              .map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    [
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition',
+                      isActive
+                        ? 'bg-teal-50 text-teal-700'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+                    ].join(' ')
+                  }
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md border border-current/15 text-xs">
+                    {item.icon}
+                  </span>
+                  {item.label}
+                </NavLink>
+              ))}
           </nav>
         </aside>
 
@@ -81,20 +84,22 @@ export default function AppShell({ title, eyebrow, children }) {
               </div>
             </div>
             <nav className="flex gap-2 overflow-x-auto border-t border-slate-200 px-4 py-2 sm:px-6 lg:hidden">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    [
-                      'whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium',
-                      isActive ? 'bg-teal-600 text-white' : 'text-slate-600',
-                    ].join(' ')
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
+              {navItems
+                .filter((item) => !item.adminOnly || user?.role === 'administrator')
+                .map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      [
+                        'whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium',
+                        isActive ? 'bg-teal-600 text-white' : 'text-slate-600',
+                      ].join(' ')
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
             </nav>
           </header>
 
