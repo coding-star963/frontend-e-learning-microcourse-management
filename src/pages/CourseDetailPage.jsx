@@ -165,6 +165,12 @@ export default function CourseDetailPage() {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-5">
+              <Link
+                to={`/courses/${slug}/lessons`}
+                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700"
+              >
+                Manage Lessons
+              </Link>
               {course.status === 'draft' && (
                 <button
                   onClick={() => handleAction('publish')}
