@@ -28,6 +28,10 @@ import CourseProgressPage from './pages/CourseProgressPage';
 import LearningHistoryPage from './pages/LearningHistoryPage';
 import CourseProgressSummaryPage from './pages/CourseProgressSummaryPage';
 import StudentProgressDetailPage from './pages/StudentProgressDetailPage';
+import AnnouncementListPage from './pages/AnnouncementListPage';
+import AnnouncementCreatePage from './pages/AnnouncementCreatePage';
+import AnnouncementEditPage from './pages/AnnouncementEditPage';
+import NotificationHistoryPage from './pages/NotificationHistoryPage';
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -153,6 +157,26 @@ function AppRoutes() {
       <Route path="/progress/summary" element={
         <ProtectedRoute>
           <CourseProgressSummaryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/announcements" element={
+        <ProtectedRoute>
+          <AnnouncementListPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/announcements/create" element={
+        <ProtectedRoute>
+          <AnnouncementCreatePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/announcements/:id/edit" element={
+        <ProtectedRoute>
+          <AnnouncementEditPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/announcements/history" element={
+        <ProtectedRoute>
+          <NotificationHistoryPage />
         </ProtectedRoute>
       } />
       <Route path="/users" element={
