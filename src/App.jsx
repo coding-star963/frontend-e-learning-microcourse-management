@@ -9,6 +9,11 @@ import UserListPage from './pages/UserListPage';
 import UserCreatePage from './pages/UserCreatePage';
 import UserEditPage from './pages/UserEditPage';
 import UserDetailPage from './pages/UserDetailPage';
+import CourseListPage from './pages/CourseListPage';
+import CourseCreatePage from './pages/CourseCreatePage';
+import CourseEditPage from './pages/CourseEditPage';
+import CourseDetailPage from './pages/CourseDetailPage';
+import CategoryListPage from './pages/CategoryListPage';
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -39,6 +44,31 @@ function AppRoutes() {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <DashboardPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/courses" element={
+        <ProtectedRoute>
+          <CourseListPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/courses/create" element={
+        <ProtectedRoute>
+          <CourseCreatePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/courses/:slug" element={
+        <ProtectedRoute>
+          <CourseDetailPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/courses/:slug/edit" element={
+        <ProtectedRoute>
+          <CourseEditPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/categories" element={
+        <ProtectedRoute>
+          <CategoryListPage />
         </ProtectedRoute>
       } />
       <Route path="/users" element={
