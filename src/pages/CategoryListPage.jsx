@@ -13,10 +13,6 @@ export default function CategoryListPage() {
   const [formData, setFormData] = useState({ name: '', description: '' });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
     setLoading(true);
     try {
@@ -28,6 +24,22 @@ export default function CategoryListPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const response = await categoryService.getAll({ per_page: 100 });
+        setCategories(response.data.data);
+      } catch {
+        setError('Failed to load categories.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const resetForm = () => {
     setFormData({ name: '', description: '' });

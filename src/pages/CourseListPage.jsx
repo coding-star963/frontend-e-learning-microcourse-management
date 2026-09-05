@@ -45,19 +45,28 @@ export default function CourseListPage() {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const response = await categoryService.getAll({ per_page: 100 });
-      setCategories(response.data.data);
-    } catch {
-      console.error('Failed to load categories');
-    }
-  };
-
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchCourses(), fetchCategories()]);
+      setLoading(true);
+      try {
+        const params = { page: 1, per_page: 10 };
+        if (statusFilter) params.status = statusFilter;
+        if (categoryFilter) params.category_id = categoryFilter;
+        if (search) params.search = search;
+        const [coursesResponse, categoriesResponse] = await Promise.all([
+          courseService.getAll(params),
+          categoryService.getAll({ per_page: 100 }),
+        ]);
+        setCourses(coursesResponse.data.data);
+        setPagination(coursesResponse.data.meta);
+        setCategories(categoriesResponse.data.data);
+      } catch {
+        setError('Failed to load data.');
+      } finally {
+        setLoading(false);
+      }
     };
+
     loadData();
   }, [statusFilter, categoryFilter]);
 
