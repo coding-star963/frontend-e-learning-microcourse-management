@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { announcementService } from '../services/announcementService';
+import { useDebounce } from '../hooks/useDebounce';
 
 const typeColors = {
   general: 'bg-slate-100 text-slate-700',
@@ -27,6 +28,7 @@ export default function AnnouncementListPage() {
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
+  const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
     const loadData = async () => {
@@ -35,7 +37,7 @@ export default function AnnouncementListPage() {
         const params = { per_page: 15, page };
         if (typeFilter) params.type = typeFilter;
         if (statusFilter) params.is_published = statusFilter;
-        if (search) params.search = search;
+        if (debouncedSearch) params.search = debouncedSearch;
 
         const res = await announcementService.getAll(params);
         setAnnouncements(res.data.data);
@@ -48,12 +50,7 @@ export default function AnnouncementListPage() {
     };
 
     loadData();
-  }, [typeFilter, statusFilter, page, reloadKey]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setReloadKey((k) => k + 1);
-  };
+  }, [typeFilter, statusFilter, page, reloadKey, debouncedSearch]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this announcement? This cannot be undone.')) return;
@@ -108,7 +105,7 @@ export default function AnnouncementListPage() {
 
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
-            <form onSubmit={handleSearch} className="flex gap-2">
+            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
               <input
                 type="text"
                 value={search}
@@ -116,12 +113,6 @@ export default function AnnouncementListPage() {
                 placeholder="Search announcements..."
                 className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
-              <button
-                type="submit"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Search
-              </button>
             </form>
             <div className="flex gap-2">
               <select

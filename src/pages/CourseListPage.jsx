@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { courseService, categoryService } from '../services/courseService';
+import { useDebounce } from '../hooks/useDebounce';
 
 const statusColors = {
   draft: 'bg-amber-50 text-amber-700',
@@ -26,33 +27,19 @@ export default function CourseListPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
   const [actionLoading, setActionLoading] = useState(null);
-
-  const fetchCourses = async (page = 1) => {
-    setLoading(true);
-    try {
-      const params = { page, per_page: 10 };
-      if (statusFilter) params.status = statusFilter;
-      if (categoryFilter) params.category_id = categoryFilter;
-      if (search) params.search = search;
-      const response = await courseService.getAll(params);
-      setCourses(response.data.data);
-      setPagination(response.data.meta);
-    } catch {
-      setError('Failed to load courses.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [reloadKey, setReloadKey] = useState(0);
+  const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const params = { page: 1, per_page: 10 };
+        const params = { page, per_page: 10 };
         if (statusFilter) params.status = statusFilter;
         if (categoryFilter) params.category_id = categoryFilter;
-        if (search) params.search = search;
+        if (debouncedSearch) params.search = debouncedSearch;
         const [coursesResponse, categoriesResponse] = await Promise.all([
           courseService.getAll(params),
           categoryService.getAll({ per_page: 100 }),
@@ -68,12 +55,7 @@ export default function CourseListPage() {
     };
 
     loadData();
-  }, [statusFilter, categoryFilter]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    fetchCourses();
-  };
+  }, [statusFilter, categoryFilter, debouncedSearch, page, reloadKey]);
 
   const handleAction = async (action, slug) => {
     setActionLoading(slug);
@@ -101,11 +83,11 @@ export default function CourseListPage() {
           }
           response = await courseService.delete(slug);
           setSuccess(response.data.message);
-          fetchCourses();
+          setReloadKey((k) => k + 1);
           break;
       }
       if (action !== 'delete') {
-        fetchCourses();
+        setReloadKey((k) => k + 1);
       }
     } catch (err) {
       setError(err.response?.data?.message || `Failed to ${action} course.`);
@@ -135,7 +117,7 @@ export default function CourseListPage() {
 
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 p-4">
-            <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex-1">
                 <input
                   type="text"
@@ -165,12 +147,6 @@ export default function CourseListPage() {
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
-              <button
-                type="submit"
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-              >
-                Search
-              </button>
             </form>
           </div>
 
@@ -285,17 +261,17 @@ export default function CourseListPage() {
                 Showing {pagination.from} to {pagination.to} of {pagination.total} courses
               </p>
               <div className="flex gap-1">
-                {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((page) => (
+                {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((p) => (
                   <button
-                    key={page}
-                    onClick={() => fetchCourses(page)}
+                    key={p}
+                    onClick={() => setPage(p)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                      page === pagination.current_page
+                      p === pagination.current_page
                         ? 'bg-teal-600 text-white'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
-                    {page}
+                    {p}
                   </button>
                 ))}
               </div>

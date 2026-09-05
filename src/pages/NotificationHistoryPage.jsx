@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { announcementService } from '../services/announcementService';
+import { useDebounce } from '../hooks/useDebounce';
 
 const typeColors = {
   general: 'bg-slate-100 text-slate-700',
@@ -23,7 +24,7 @@ export default function NotificationHistoryPage() {
   const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
-  const [reloadKey, setReloadKey] = useState(0);
+  const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,7 +32,7 @@ export default function NotificationHistoryPage() {
       try {
         const params = { per_page: 15, page };
         if (typeFilter) params.type = typeFilter;
-        if (search) params.search = search;
+        if (debouncedSearch) params.search = debouncedSearch;
 
         const res = await announcementService.getNotificationHistory(params);
         setHistory(res.data.data);
@@ -44,13 +45,7 @@ export default function NotificationHistoryPage() {
     };
 
     loadData();
-  }, [typeFilter, page, reloadKey]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPage(1);
-    setReloadKey((k) => k + 1);
-  };
+  }, [typeFilter, page, debouncedSearch]);
 
   return (
     <AppShell title="Notification History" eyebrow="Announcement Management">
@@ -59,7 +54,7 @@ export default function NotificationHistoryPage() {
 
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
-            <form onSubmit={handleSearch} className="flex gap-2">
+            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
               <input
                 type="text"
                 value={search}
@@ -67,12 +62,6 @@ export default function NotificationHistoryPage() {
                 placeholder="Search notifications..."
                 className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
-              <button
-                type="submit"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Search
-              </button>
             </form>
             <select
               value={typeFilter}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
+import { useDebounce } from '../hooks/useDebounce';
 
 export default function UserListPage() {
   const [users, setUsers] = useState([]);
@@ -12,6 +13,7 @@ export default function UserListPage() {
   const [search, setSearch] = useState('');
   const [togglingId, setTogglingId] = useState(null);
   const abortRef = useRef(null);
+  const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -23,6 +25,7 @@ export default function UserListPage() {
       try {
         const params = {};
         if (roleFilter) params.role = roleFilter;
+        if (debouncedSearch) params.search = debouncedSearch;
         const response = await api.get('/users', { params, signal: controller.signal });
         if (!controller.signal.aborted) {
           setUsers(response.data.data);
@@ -41,7 +44,7 @@ export default function UserListPage() {
     loadUsers();
 
     return () => controller.abort();
-  }, [roleFilter]);
+  }, [roleFilter, debouncedSearch]);
 
   const handleToggleStatus = async (userId) => {
     setTogglingId(userId);
@@ -58,8 +61,8 @@ export default function UserListPage() {
   };
 
   const filteredUsers = users.filter((user) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
+    if (!debouncedSearch) return true;
+    const q = debouncedSearch.toLowerCase();
     return user.name.toLowerCase().includes(q) || user.email.toLowerCase().includes(q);
   });
 

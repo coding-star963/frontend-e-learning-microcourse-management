@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -16,16 +17,24 @@ const navItems = [
 export default function AppShell({ title, eyebrow, children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    setLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch {
+      setLoggingOut(false);
+      setShowLogoutModal(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white px-5 py-6 lg:block">
+        <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white px-5 py-6 lg:block lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
           <Link to="/dashboard" className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-teal-600 text-sm font-bold text-white">
               EL
@@ -82,7 +91,7 @@ export default function AppShell({ title, eyebrow, children }) {
                 </div>
                 <button
                   type="button"
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutModal(true)}
                   className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
                 >
                   Logout
@@ -114,6 +123,47 @@ export default function AppShell({ title, eyebrow, children }) {
           </main>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={() => !loggingOut && setShowLogoutModal(false)} />
+          <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-950">Confirm Logout</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Are you sure you want to log out? You will need to sign in again to access your account.
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                disabled={loggingOut}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                {loggingOut ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Logging out...
+                  </span>
+                ) : (
+                  'Log out'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

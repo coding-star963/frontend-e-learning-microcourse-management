@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { enrollmentService } from '../services/enrollmentService';
+import { useDebounce } from '../hooks/useDebounce';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -27,6 +28,7 @@ export default function EnrollmentListPage() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [saving, setSaving] = useState(false);
+  const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
     const loadData = async () => {
@@ -34,7 +36,7 @@ export default function EnrollmentListPage() {
       try {
         const params = { per_page: 15, page };
         if (statusFilter) params.status = statusFilter;
-        if (search) params.search = search;
+        if (debouncedSearch) params.search = debouncedSearch;
 
         const [enrollmentsRes, statsRes, coursesRes, studentsRes] = await Promise.all([
           enrollmentService.getAll(params),
@@ -56,12 +58,7 @@ export default function EnrollmentListPage() {
     };
 
     loadData();
-  }, [statusFilter, page, reloadKey]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setReloadKey((k) => k + 1);
-  };
+  }, [statusFilter, page, reloadKey, debouncedSearch]);
 
   const handleAddEnrollment = async (e) => {
     e.preventDefault();
@@ -210,7 +207,7 @@ export default function EnrollmentListPage() {
 
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 p-4">
-            <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex-1">
                 <input
                   type="text"
@@ -231,12 +228,6 @@ export default function EnrollmentListPage() {
                 <option value="cancelled">Cancelled</option>
                 <option value="suspended">Suspended</option>
               </select>
-              <button
-                type="submit"
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Search
-              </button>
             </form>
           </div>
 
