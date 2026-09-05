@@ -23,6 +23,11 @@ import EnrollmentListPage from './pages/EnrollmentListPage';
 import EnrollmentDetailPage from './pages/EnrollmentDetailPage';
 import CourseEnrollmentsPage from './pages/CourseEnrollmentsPage';
 import StudentEnrollmentsPage from './pages/StudentEnrollmentsPage';
+import StudentProgressPage from './pages/StudentProgressPage';
+import CourseProgressPage from './pages/CourseProgressPage';
+import LearningHistoryPage from './pages/LearningHistoryPage';
+import CourseProgressSummaryPage from './pages/CourseProgressSummaryPage';
+import StudentProgressDetailPage from './pages/StudentProgressDetailPage';
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -123,6 +128,31 @@ function AppRoutes() {
       <Route path="/students/:id/enrollments" element={
         <ProtectedRoute>
           <StudentEnrollmentsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/progress/students" element={
+        <ProtectedRoute>
+          <StudentProgressPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/progress/students/:id" element={
+        <ProtectedRoute>
+          <StudentProgressDetailPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/courses/:slug/progress" element={
+        <ProtectedRoute>
+          <CourseProgressPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/progress/history" element={
+        <ProtectedRoute>
+          <LearningHistoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/progress/summary" element={
+        <ProtectedRoute>
+          <CourseProgressSummaryPage />
         </ProtectedRoute>
       } />
       <Route path="/users" element={
