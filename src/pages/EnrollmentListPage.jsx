@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { enrollmentService } from '../services/enrollmentService';
+import { courseService } from '../services/courseService';
+import api from '../services/api';
 import { useDebounce } from '../hooks/useDebounce';
 
 const statusColors = {
@@ -41,8 +43,8 @@ export default function EnrollmentListPage() {
         const [enrollmentsRes, statsRes, coursesRes, studentsRes] = await Promise.all([
           enrollmentService.getAll(params),
           enrollmentService.getStats(),
-          import('../services/courseService').then((m) => m.courseService.getAll({ per_page: 100 })),
-          import('../services/api').then((m) => m.default.get('/users', { params: { role: 'student', per_page: 100 } })),
+          courseService.getAll({ per_page: 100 }),
+          api.get('/users', { params: { role: 'student', per_page: 100 } }),
         ]);
 
         setEnrollments(enrollmentsRes.data.data);

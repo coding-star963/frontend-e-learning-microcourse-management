@@ -9,7 +9,13 @@ function useAuthState() {
   const fetchUser = useCallback(async () => {
     try {
       const response = await api.get('/user');
-      setUser(response.data.data);
+      const userData = response.data.data;
+      if (userData?.role === 'student') {
+        localStorage.removeItem('token');
+        setUser(null);
+        return;
+      }
+      setUser(userData);
     } catch {
       localStorage.removeItem('token');
     } finally {
@@ -20,6 +26,15 @@ function useAuthState() {
   const login = useCallback(async (email, password) => {
     const response = await api.post('/login', { email, password });
     const { user: userData, token } = response.data;
+    if (userData.role === 'student') {
+      throw {
+        response: {
+          data: {
+            message: 'Access restricted to administrators and teachers. Students must access courses via the mobile application.',
+          },
+        },
+      };
+    }
     localStorage.setItem('token', token);
     setUser(userData);
     return userData;

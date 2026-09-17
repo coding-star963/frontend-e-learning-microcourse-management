@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Alert from '../components/Alert';
 import AuthLayout from '../components/AuthLayout';
@@ -29,8 +29,8 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to continue managing your e-learning microcourses."
+      title="Staff Portal Sign In"
+      subtitle="Administrator and teacher access only. Student learning features are accessed via the mobile application."
     >
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         {error && <Alert>{error}</Alert>}
@@ -55,9 +55,17 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+              Password
+            </label>
+            <Link
+              to="/forgot-password"
+              className="text-xs font-semibold text-teal-600 hover:text-teal-700"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="mt-2">
               <input
                 id="password"
