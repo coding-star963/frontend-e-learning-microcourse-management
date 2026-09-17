@@ -4,6 +4,7 @@ import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { enrollmentService } from '../services/enrollmentService';
 import api from '../services/api';
+import { getStorageUrl } from '../utils/imageUrl';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -26,7 +27,7 @@ export default function StudentEnrollmentsPage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const params = { per_page: 15, page };
+        const params = { page, per_page: 15 };
         if (statusFilter) params.status = statusFilter;
 
         const [studentRes, enrollmentsRes] = await Promise.all([
@@ -70,13 +71,24 @@ export default function StudentEnrollmentsPage() {
         </div>
 
         {student && (
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
-                {student.name?.charAt(0).toUpperCase()}
-              </div>
+              {student.profile_photo ? (
+                <img
+                  src={getStorageUrl(student.profile_photo)}
+                  alt={student.name}
+                  className="h-14 w-14 rounded-full object-cover ring-4 ring-teal-500/20 shadow-sm"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 text-lg font-bold text-white shadow-sm ring-4 ring-slate-100">
+                  {student.name?.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
-                <h2 className="text-lg font-bold text-slate-950">{student.name}</h2>
+                <h2 className="text-xl font-bold text-slate-900">{student.name}</h2>
                 <p className="text-sm text-slate-500">{student.email}</p>
               </div>
             </div>

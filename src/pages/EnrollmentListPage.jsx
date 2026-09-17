@@ -6,12 +6,14 @@ import { enrollmentService } from '../services/enrollmentService';
 import { courseService } from '../services/courseService';
 import api from '../services/api';
 import { useDebounce } from '../hooks/useDebounce';
+import { PlusIcon, SearchIcon, EnrollmentsIcon } from '../components/Icons';
+import { getStorageUrl } from '../utils/imageUrl';
 
-const statusColors = {
-  active: 'bg-emerald-50 text-emerald-700',
-  completed: 'bg-blue-50 text-blue-700',
-  cancelled: 'bg-slate-100 text-slate-600',
-  suspended: 'bg-amber-50 text-amber-700',
+const statusBadge = {
+  active: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  completed: 'bg-blue-50 text-blue-700 ring-blue-600/20',
+  cancelled: 'bg-slate-100 text-slate-600 ring-slate-400/20',
+  suspended: 'bg-amber-50 text-amber-700 ring-amber-600/20',
 };
 
 export default function EnrollmentListPage() {
@@ -108,189 +110,239 @@ export default function EnrollmentListPage() {
   };
 
   return (
-    <AppShell title="Enrollments" eyebrow="Enrollment Management">
-      <div className="space-y-6">
+    <AppShell title="Student Enrollments" eyebrow="Academics">
+      <div className="space-y-6 pb-12">
         {error && <Alert type="error">{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
 
+        {/* Stats Strip */}
         {stats && (
-          <section className="grid grid-cols-2 gap-4 md:grid-cols-5">
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-slate-500">Total</p>
-              <p className="mt-2 text-2xl font-bold text-slate-950">{stats.total}</p>
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Enrolled</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">{stats.total}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-slate-500">Active</p>
-              <p className="mt-2 text-2xl font-bold text-emerald-600">{stats.active}</p>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Active Learning</p>
+              <p className="mt-2 text-2xl font-black text-emerald-600">{stats.active}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-slate-500">Completed</p>
-              <p className="mt-2 text-2xl font-bold text-blue-600">{stats.completed}</p>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Completed</p>
+              <p className="mt-2 text-2xl font-black text-blue-600">{stats.completed}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-slate-500">Cancelled</p>
-              <p className="mt-2 text-2xl font-bold text-slate-600">{stats.cancelled}</p>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Cancelled</p>
+              <p className="mt-2 text-2xl font-black text-slate-500">{stats.cancelled}</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-slate-500">Avg Progress</p>
-              <p className="mt-2 text-2xl font-bold text-teal-600">{stats.average_progress}%</p>
+            <div className="col-span-2 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:col-span-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Avg Completion</p>
+              <p className="mt-2 text-2xl font-black text-teal-600">{stats.average_progress}%</p>
             </div>
           </section>
         )}
 
+        {/* Action Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-600">Monitor and manage all course enrollments.</p>
+            <p className="text-sm text-slate-600">
+              Audit course participation, update student completion statuses, or manually grant access.
+            </p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition-all hover:brightness-110"
           >
-            <span className="text-lg leading-none">+</span>
+            <PlusIcon className="h-4 w-4" />
             Enroll Student
           </button>
         </div>
 
+        {/* Modal: Enroll Student */}
         {showAddModal && (
-          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 p-5">
-              <h2 className="text-lg font-bold text-slate-950">Enroll Student in Course</h2>
-            </div>
-            <form onSubmit={handleAddEnrollment} className="p-5 space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+              onClick={() => !saving && setShowAddModal(false)}
+            />
+            <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-900/10">
+              <div className="border-b border-slate-100 pb-4">
+                <h3 className="text-lg font-bold text-slate-900">Enroll Student in Micro-Course</h3>
+                <p className="text-xs text-slate-500">Select an existing registered student and target course.</p>
+              </div>
+              <form onSubmit={handleAddEnrollment} className="mt-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700">Student <span className="text-rose-500">*</span></label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Student Account <span className="text-rose-500">*</span>
+                  </label>
                   <select
                     value={addForm.user_id}
                     onChange={(e) => setAddForm({ ...addForm, user_id: e.target.value })}
                     required
-                    className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
                   >
-                    <option value="">Select student</option>
+                    <option value="">Select a student...</option>
                     {students.map((s) => (
                       <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700">Course <span className="text-rose-500">*</span></label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Micro-Course <span className="text-rose-500">*</span>
+                  </label>
                   <select
                     value={addForm.course_id}
                     onChange={(e) => setAddForm({ ...addForm, course_id: e.target.value })}
                     required
-                    className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
                   >
-                    <option value="">Select course</option>
+                    <option value="">Select a course...</option>
                     {courses.map((c) => (
                       <option key={c.id} value={c.id}>{c.title}</option>
                     ))}
                   </select>
                 </div>
-              </div>
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
-                >
-                  {saving ? 'Enrolling...' : 'Enroll Student'}
-                </button>
-              </div>
-            </form>
+                <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition disabled:opacity-50"
+                  >
+                    {saving ? 'Enrolling...' : 'Confirm Enrollment'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 p-4">
-            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Search by student name, email, or course..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-                />
+        {/* Filter and Search */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_220px]">
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <SearchIcon className="h-4 w-4" />
               </div>
+              <input
+                type="text"
+                placeholder="Search student name, email, or course..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
+              />
+            </div>
+            <div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
               >
-                <option value="">All Status</option>
+                <option value="">All Enrollment Statuses</option>
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
                 <option value="suspended">Suspended</option>
               </select>
-            </form>
-          </div>
+            </div>
+          </form>
+        </div>
 
+        {/* Enrollments Table */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-sm text-slate-500">Loading enrollments...</div>
+            <div className="flex min-h-[300px] flex-col items-center justify-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+              <p className="text-xs font-semibold text-slate-400">Loading enrollments...</p>
+            </div>
           ) : enrollments.length === 0 ? (
-            <div className="p-8 text-center text-sm text-slate-500">No enrollments found.</div>
+            <div className="p-12 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <EnrollmentsIcon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-base font-bold text-slate-900">No enrollments found</h3>
+              <p className="mt-1 text-sm text-slate-500">No student enrollment records match the search filter.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50">
+                <thead className="border-b border-slate-100 bg-slate-50/75">
                   <tr>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Student</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Course</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Progress</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Enrolled</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600 text-right">Actions</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Student</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Course</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Progress</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Enrolled</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-100">
                   {enrollments.map((enrollment) => (
-                    <tr key={enrollment.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-semibold text-slate-950">{enrollment.user?.name}</p>
-                          <p className="text-xs text-slate-500">{enrollment.user?.email}</p>
+                    <tr key={enrollment.id} className="hover:bg-slate-50/75 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {enrollment.user?.profile_photo ? (
+                            <img
+                              src={getStorageUrl(enrollment.user.profile_photo)}
+                              alt={enrollment.user.name}
+                              className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-slate-100 shadow-sm"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 text-white font-bold text-xs ring-2 ring-teal-100 shadow-sm">
+                              {enrollment.user?.name?.charAt(0).toUpperCase() || 'S'}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-slate-900">{enrollment.user?.name}</p>
+                            <p className="text-xs text-slate-500">{enrollment.user?.email}</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <Link
                           to={`/courses/${enrollment.course?.slug}`}
-                          className="font-medium text-teal-600 hover:underline"
+                          className="font-semibold text-slate-900 hover:text-teal-600 transition-colors"
                         >
                           {enrollment.course?.title}
                         </Link>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize ${statusColors[enrollment.status]}`}>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${
+                            statusBadge[enrollment.status] || 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
                           {enrollment.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2.5">
                           <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
                             <div
-                              className="h-full rounded-full bg-teal-600"
-                              style={{ width: `${enrollment.progress}%` }}
+                              className="h-full rounded-full bg-teal-500 transition-all duration-300"
+                              style={{ width: `${Math.min(enrollment.progress || 0, 100)}%` }}
                             />
                           </div>
-                          <span className="text-xs font-medium text-slate-600">{enrollment.progress}%</span>
+                          <span className="text-xs font-bold text-slate-600">{enrollment.progress}%</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
+                      <td className="px-6 py-4 text-xs font-medium text-slate-400">
                         {new Date(enrollment.enrolled_at).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                           <Link
                             to={`/enrollments/${enrollment.id}`}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                           >
                             View
                           </Link>
@@ -298,19 +350,19 @@ export default function EnrollmentListPage() {
                             <>
                               <button
                                 onClick={() => handleAction('complete', enrollment.id)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50 transition"
                               >
                                 Complete
                               </button>
                               <button
                                 onClick={() => handleAction('suspend', enrollment.id)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50"
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-600 hover:bg-amber-50 transition"
                               >
                                 Suspend
                               </button>
                               <button
                                 onClick={() => handleAction('cancel', enrollment.id)}
-                                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                                className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition"
                               >
                                 Cancel
                               </button>
@@ -319,14 +371,14 @@ export default function EnrollmentListPage() {
                           {(enrollment.status === 'cancelled' || enrollment.status === 'suspended') && (
                             <button
                               onClick={() => handleAction('activate', enrollment.id)}
-                              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50"
+                              className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition"
                             >
                               Reactivate
                             </button>
                           )}
                           <button
                             onClick={() => handleAction('delete', enrollment.id)}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition"
                           >
                             Delete
                           </button>
@@ -340,18 +392,20 @@ export default function EnrollmentListPage() {
           )}
 
           {pagination && pagination.last_page > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-              <p className="text-sm text-slate-500">
-                Showing {pagination.from} to {pagination.to} of {pagination.total} enrollments
+            <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 px-6 py-4 gap-4">
+              <p className="text-xs font-medium text-slate-500">
+                Showing <span className="font-bold text-slate-700">{pagination.from}</span> to{' '}
+                <span className="font-bold text-slate-700">{pagination.to}</span> of{' '}
+                <span className="font-bold text-slate-700">{pagination.total}</span> enrollments
               </p>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
                     onClick={() => setPage(page)}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                    className={`h-8 w-8 rounded-lg text-xs font-bold transition ${
                       page === pagination.current_page
-                        ? 'bg-teal-600 text-white'
+                        ? 'bg-teal-600 text-white shadow-sm shadow-teal-600/30'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >

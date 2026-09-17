@@ -4,17 +4,18 @@ import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { announcementService } from '../services/announcementService';
 import { useDebounce } from '../hooks/useDebounce';
+import { PlusIcon, SearchIcon, AnnouncementsIcon } from '../components/Icons';
 
-const typeColors = {
-  general: 'bg-slate-100 text-slate-700',
-  course_update: 'bg-blue-50 text-blue-700',
-  important: 'bg-rose-50 text-rose-700',
+const typeBadge = {
+  general: 'bg-slate-100 text-slate-700 ring-slate-500/20',
+  course_update: 'bg-cyan-50 text-cyan-700 ring-cyan-600/20',
+  important: 'bg-rose-50 text-rose-700 ring-rose-600/20',
 };
 
 const typeLabels = {
-  general: 'General',
+  general: 'General Notice',
   course_update: 'Course Update',
-  important: 'Important',
+  important: 'High Priority',
 };
 
 export default function AnnouncementListPage() {
@@ -77,130 +78,167 @@ export default function AnnouncementListPage() {
   };
 
   return (
-    <AppShell title="Announcements" eyebrow="Announcement Management">
-      <div className="space-y-6">
+    <AppShell title="Announcements & Bulletins" eyebrow="Communication">
+      <div className="space-y-6 pb-12">
         {error && <Alert type="error">{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
 
+        {/* Action Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-600">Create and manage announcements for students.</p>
+            <p className="text-sm text-slate-600">
+              Broadcast critical updates, course notices, and general announcements to students and mobile app users.
+            </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Link
               to="/announcements/history"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
-              History
+              Audits
             </Link>
             <Link
               to="/announcements/create"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition-all hover:brightness-110"
             >
-              <span className="text-lg leading-none">+</span>
+              <PlusIcon className="h-4 w-4" />
               New Announcement
             </Link>
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
-            <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+        {/* Search & Filter Bar */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_200px_200px]">
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <SearchIcon className="h-4 w-4" />
+              </div>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search announcements..."
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                placeholder="Search bulletins and content..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
               />
-            </form>
-            <div className="flex gap-2">
+            </div>
+            <div>
               <select
                 value={typeFilter}
                 onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
               >
-                <option value="">All Types</option>
+                <option value="">All Categories</option>
                 <option value="general">General</option>
                 <option value="course_update">Course Update</option>
                 <option value="important">Important</option>
               </select>
+            </div>
+            <div>
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
               >
-                <option value="">All Status</option>
-                <option value="1">Published</option>
-                <option value="0">Draft</option>
+                <option value="">All States</option>
+                <option value="1">Published Only</option>
+                <option value="0">Drafts Only</option>
               </select>
             </div>
           </div>
+        </div>
 
+        {/* Announcements List Container */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-sm text-slate-500">Loading...</div>
+            <div className="flex min-h-[300px] flex-col items-center justify-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+              <p className="text-xs font-semibold text-slate-400">Loading bulletins...</p>
+            </div>
           ) : announcements.length === 0 ? (
-            <div className="p-8 text-center text-sm text-slate-500">
-              No announcements found. Click "New Announcement" to create one.
+            <div className="p-12 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <AnnouncementsIcon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-base font-bold text-slate-900">No announcements found</h3>
+              <p className="mt-1 text-sm text-slate-500">Create your first announcement to notify staff or students.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-200">
+            <div className="divide-y divide-slate-100">
               {announcements.map((announcement) => (
-                <div key={announcement.id} className="p-4 hover:bg-slate-50">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                <div key={announcement.id} className="p-6 hover:bg-slate-50/75 transition-colors">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1 pr-4">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Link
                           to={`/announcements/${announcement.id}/edit`}
-                          className="font-semibold text-slate-950 hover:text-teal-600"
+                          className="font-bold text-base text-slate-900 hover:text-teal-600 transition-colors"
                         >
                           {announcement.title}
                         </Link>
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${typeColors[announcement.type]}`}>
-                          {typeLabels[announcement.type]}
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ${
+                            typeBadge[announcement.type] || 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {typeLabels[announcement.type] || announcement.type}
                         </span>
                         {announcement.is_published ? (
-                          <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                            Published
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-600/20">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Live
                           </span>
                         ) : (
-                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                          <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">
                             Draft
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-slate-500 line-clamp-2">{announcement.content}</p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                        <span>by {announcement.user?.name}</span>
+                      <p className="mt-2 text-sm text-slate-600 leading-relaxed line-clamp-2">
+                        {announcement.content}
+                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                        <span className="font-medium text-slate-600">Author: {announcement.user?.name || 'Staff'}</span>
                         {announcement.course && (
-                          <span>for {announcement.course.title}</span>
+                          <>
+                            <span>&bull;</span>
+                            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 font-medium">
+                              {announcement.course.title}
+                            </span>
+                          </>
                         )}
-                        <span>{new Date(announcement.created_at).toLocaleDateString()}</span>
+                        <span>&bull;</span>
+                        <span>Created {new Date(announcement.created_at).toLocaleDateString()}</span>
                         {announcement.published_at && (
-                          <span>published {new Date(announcement.published_at).toLocaleDateString()}</span>
+                          <>
+                            <span>&bull;</span>
+                            <span className="text-emerald-600 font-medium">
+                              Published {new Date(announcement.published_at).toLocaleDateString()}
+                            </span>
+                          </>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-start">
                       <button
                         onClick={() => handleTogglePublish(announcement)}
-                        className={`rounded-lg px-2.5 py-1.5 text-xs font-medium ${
+                        className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition ${
                           announcement.is_published
-                            ? 'text-amber-600 hover:bg-amber-50'
-                            : 'text-emerald-600 hover:bg-emerald-50'
+                            ? 'text-amber-700 hover:bg-amber-50'
+                            : 'text-emerald-700 hover:bg-emerald-50'
                         }`}
                       >
                         {announcement.is_published ? 'Unpublish' : 'Publish'}
                       </button>
                       <Link
                         to={`/announcements/${announcement.id}/edit`}
-                        className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                        className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                       >
                         Edit
                       </Link>
                       <button
                         onClick={() => handleDelete(announcement.id)}
-                        className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50"
+                        className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition"
                       >
                         Delete
                       </button>
@@ -212,18 +250,20 @@ export default function AnnouncementListPage() {
           )}
 
           {pagination && pagination.last_page > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-              <p className="text-sm text-slate-500">
-                Showing {pagination.from} to {pagination.to} of {pagination.total}
+            <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 px-6 py-4 gap-4">
+              <p className="text-xs font-medium text-slate-500">
+                Showing <span className="font-bold text-slate-700">{pagination.from}</span> to{' '}
+                <span className="font-bold text-slate-700">{pagination.to}</span> of{' '}
+                <span className="font-bold text-slate-700">{pagination.total}</span> bulletins
               </p>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((p) => (
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                    className={`h-8 w-8 rounded-lg text-xs font-bold transition ${
                       p === pagination.current_page
-                        ? 'bg-teal-600 text-white'
+                        ? 'bg-teal-600 text-white shadow-sm shadow-teal-600/30'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >

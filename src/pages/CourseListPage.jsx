@@ -4,17 +4,18 @@ import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { courseService, categoryService } from '../services/courseService';
 import { useDebounce } from '../hooks/useDebounce';
+import { PlusIcon, SearchIcon, CoursesIcon } from '../components/Icons';
 
-const statusColors = {
-  draft: 'bg-amber-50 text-amber-700',
-  published: 'bg-emerald-50 text-emerald-700',
-  archived: 'bg-slate-100 text-slate-600',
+const statusBadge = {
+  draft: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  published: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  archived: 'bg-slate-100 text-slate-600 ring-slate-400/20',
 };
 
-const difficultyColors = {
-  beginner: 'bg-blue-50 text-blue-700',
-  intermediate: 'bg-purple-50 text-purple-700',
-  advanced: 'bg-rose-50 text-rose-700',
+const difficultyBadge = {
+  beginner: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  intermediate: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
+  advanced: 'bg-rose-50 text-rose-700 ring-rose-600/20',
 };
 
 export default function CourseListPage() {
@@ -48,7 +49,7 @@ export default function CourseListPage() {
         setPagination(coursesResponse.data.meta);
         setCategories(categoriesResponse.data.data);
       } catch {
-        setError('Failed to load data.');
+        setError('Failed to load course catalog.');
       } finally {
         setLoading(false);
       }
@@ -77,7 +78,7 @@ export default function CourseListPage() {
           setSuccess(response.data.message);
           break;
         case 'delete':
-          if (!window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+          if (!window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
             setActionLoading(null);
             return;
           }
@@ -97,118 +98,165 @@ export default function CourseListPage() {
   };
 
   return (
-    <AppShell title="Micro-Courses" eyebrow="Course Management">
-      <div className="space-y-6">
+    <AppShell title="Micro-Course Catalog" eyebrow="Curriculum">
+      <div className="space-y-6 pb-12">
         {error && <Alert type="error">{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
 
+        {/* Action Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-600">Manage your micro-courses, publish content, and track status.</p>
+            <p className="text-sm text-slate-600">
+              Manage courses, configure modular lessons, adjust publishing states, and track learning content.
+            </p>
           </div>
           <Link
             to="/courses/create"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition-all hover:brightness-110"
           >
-            <span className="text-lg leading-none">+</span>
+            <PlusIcon className="h-4 w-4" />
             Create Course
           </Link>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 p-4">
-            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Search courses..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-                />
+        {/* Filter and Search Bar */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_200px_200px]">
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <SearchIcon className="h-4 w-4" />
               </div>
+              <input
+                type="text"
+                placeholder="Search by title, description..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
+              />
+            </div>
+            <div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
               >
-                <option value="">All Status</option>
-                <option value="draft">Draft</option>
+                <option value="">All Statuses</option>
+                <option value="draft">Drafts</option>
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
               </select>
+            </div>
+            <div>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
               >
                 <option value="">All Categories</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
-            </form>
-          </div>
+            </div>
+          </form>
+        </div>
 
+        {/* Courses Table */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-sm text-slate-500">Loading courses...</div>
+            <div className="flex min-h-[300px] flex-col items-center justify-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+              <p className="text-xs font-semibold text-slate-400">Loading catalog...</p>
+            </div>
           ) : courses.length === 0 ? (
-            <div className="p-8 text-center text-sm text-slate-500">
-              No courses found. <Link to="/courses/create" className="text-teal-600 hover:underline">Create your first course</Link>.
+            <div className="p-12 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <CoursesIcon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-base font-bold text-slate-900">No courses found</h3>
+              <p className="mt-1 text-sm text-slate-500">Try adjusting your search criteria or create a new course.</p>
+              <div className="mt-5">
+                <Link
+                  to="/courses/create"
+                  className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Create Course
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50">
+                <thead className="border-b border-slate-100 bg-slate-50/75">
                   <tr>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Course</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Category</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Difficulty</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600">Teacher</th>
-                    <th className="px-4 py-3 font-semibold text-slate-600 text-right">Actions</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Course</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Category</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Level</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">Teacher</th>
+                    <th className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-100">
                   {courses.map((course) => (
-                    <tr key={course.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-semibold text-slate-950">{course.title}</p>
-                          {course.duration && (
-                            <p className="text-xs text-slate-500">{course.duration}</p>
-                          )}
+                    <tr key={course.id} className="hover:bg-slate-50/75 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="min-w-[200px]">
+                          <Link
+                            to={`/courses/${course.slug}`}
+                            className="font-bold text-slate-900 hover:text-teal-600 transition-colors"
+                          >
+                            {course.title}
+                          </Link>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                            {course.duration && <span>{course.duration}</span>}
+                            {course.lessons_count !== undefined && (
+                              <>
+                                <span>&bull;</span>
+                                <span>{course.lessons_count} lessons</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-slate-600">
+                      <td className="px-6 py-4">
+                        <span className="inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
                           {course.category?.name || 'Uncategorized'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize ${statusColors[course.status] || 'bg-slate-100 text-slate-600'}`}>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${
+                            statusBadge[course.status] || 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
                           {course.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize ${difficultyColors[course.difficulty_level] || 'bg-slate-100 text-slate-600'}`}>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${
+                            difficultyBadge[course.difficulty_level] || 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
                           {course.difficulty_level}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {course.teacher?.name || 'Unknown'}
+                      <td className="px-6 py-4 text-xs font-medium text-slate-600">
+                        {course.teacher?.name || 'Staff'}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                           <Link
                             to={`/courses/${course.slug}`}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                           >
                             View
                           </Link>
                           <Link
                             to={`/courses/${course.slug}/edit`}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                           >
                             Edit
                           </Link>
@@ -216,7 +264,7 @@ export default function CourseListPage() {
                             <button
                               onClick={() => handleAction('publish', course.slug)}
                               disabled={actionLoading === course.slug}
-                              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+                              className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition disabled:opacity-50"
                             >
                               Publish
                             </button>
@@ -225,7 +273,7 @@ export default function CourseListPage() {
                             <button
                               onClick={() => handleAction('unpublish', course.slug)}
                               disabled={actionLoading === course.slug}
-                              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50 disabled:opacity-50"
+                              className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition disabled:opacity-50"
                             >
                               Unpublish
                             </button>
@@ -234,7 +282,7 @@ export default function CourseListPage() {
                             <button
                               onClick={() => handleAction('archive', course.slug)}
                               disabled={actionLoading === course.slug}
-                              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                              className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition disabled:opacity-50"
                             >
                               Archive
                             </button>
@@ -242,7 +290,7 @@ export default function CourseListPage() {
                           <button
                             onClick={() => handleAction('delete', course.slug)}
                             disabled={actionLoading === course.slug}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition disabled:opacity-50"
                           >
                             Delete
                           </button>
@@ -256,18 +304,20 @@ export default function CourseListPage() {
           )}
 
           {pagination && pagination.last_page > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-              <p className="text-sm text-slate-500">
-                Showing {pagination.from} to {pagination.to} of {pagination.total} courses
+            <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 px-6 py-4 gap-4">
+              <p className="text-xs font-medium text-slate-500">
+                Showing <span className="font-bold text-slate-700">{pagination.from}</span> to{' '}
+                <span className="font-bold text-slate-700">{pagination.to}</span> of{' '}
+                <span className="font-bold text-slate-700">{pagination.total}</span> courses
               </p>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((p) => (
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                    className={`h-8 w-8 rounded-lg text-xs font-bold transition ${
                       p === pagination.current_page
-                        ? 'bg-teal-600 text-white'
+                        ? 'bg-teal-600 text-white shadow-sm shadow-teal-600/30'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >

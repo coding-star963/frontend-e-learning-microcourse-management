@@ -172,7 +172,7 @@ export default function CourseProgressPage() {
                               <td className="px-4 py-3">
                                 <div className="flex items-center justify-end gap-1">
                                   <Link
-                                    to={`/students/${item.student.id}/progress`}
+                                    to={`/progress/students/${item.student.id}`}
                                     className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
                                   >
                                     Progress

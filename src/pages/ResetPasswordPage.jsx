@@ -48,28 +48,28 @@ export default function ResetPasswordPage() {
   return (
     <AuthLayout
       title="Set new password"
-      subtitle="Enter your email, reset token, and choose a new password."
+      subtitle="Enter your email, reset token, and choose a strong new password."
     >
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         {error && <Alert>{error}</Alert>}
         {message && (
-          <div className="rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm text-teal-800">
+          <div className="rounded-2xl border border-teal-500/30 bg-teal-950/40 p-4 text-sm text-teal-300">
             {message} Redirecting to login...
           </div>
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
             Email address
           </label>
-          <div className="mt-2">
+          <div className="relative mt-2">
             <input
               id="email"
               name="email"
               type="email"
               autoComplete="email"
               required
-              className="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
+              className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -78,17 +78,17 @@ export default function ResetPasswordPage() {
         </div>
 
         <div>
-          <label htmlFor="token" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="token" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
             Reset token
           </label>
-          <div className="mt-2">
+          <div className="relative mt-2">
             <input
               id="token"
               name="token"
               type="text"
               required
-              className="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
-              placeholder="Paste the reset token here"
+              className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none font-mono transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
+              placeholder="Paste token received"
               value={token}
               onChange={(e) => setToken(e.target.value)}
             />
@@ -96,19 +96,18 @@ export default function ResetPasswordPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
             New password
           </label>
-          <div className="mt-2">
+          <div className="relative mt-2">
             <input
               id="password"
               name="password"
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
-              className="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
-              placeholder="Minimum 8 characters"
+              className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
+              placeholder="Min. 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -116,18 +115,18 @@ export default function ResetPasswordPage() {
         </div>
 
         <div>
-          <label htmlFor="password_confirmation" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="password_confirmation" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
             Confirm new password
           </label>
-          <div className="mt-2">
+          <div className="relative mt-2">
             <input
               id="password_confirmation"
               name="password_confirmation"
               type="password"
               autoComplete="new-password"
               required
-              className="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100"
-              placeholder="Confirm your new password"
+              className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
+              placeholder="Re-enter password"
               value={passwordConfirmation}
               onChange={(e) => setPasswordConfirmation(e.target.value)}
             />
@@ -137,14 +136,14 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full justify-center rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-400 px-4 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-teal-500/25 transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-teal-400/40 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? 'Resetting password...' : 'Reset password'}
+          {loading ? 'Resetting password...' : 'Update Password & Sign In'}
         </button>
 
-        <div className="text-center text-sm">
-          <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700">
-            &larr; Back to sign in
+        <div className="text-center text-sm pt-2">
+          <Link to="/login" className="text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors">
+            &larr; Return to Sign In
           </Link>
         </div>
       </form>

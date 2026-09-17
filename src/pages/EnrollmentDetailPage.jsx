@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { enrollmentService } from '../services/enrollmentService';
+import { getStorageUrl } from '../utils/imageUrl';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -115,10 +116,28 @@ export default function EnrollmentDetailPage() {
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-slate-700">Student Information</h3>
-                <div className="rounded-lg bg-slate-50 p-4">
-                  <p className="font-semibold text-slate-950">{enrollment.user?.name}</p>
-                  <p className="text-sm text-slate-500">{enrollment.user?.email}</p>
-                  <p className="mt-1 text-xs capitalize text-slate-400">{enrollment.user?.role}</p>
+                <div className="rounded-2xl bg-slate-50 p-4 flex items-center gap-4">
+                  {enrollment.user?.profile_photo ? (
+                    <img
+                      src={getStorageUrl(enrollment.user.profile_photo)}
+                      alt={enrollment.user.name}
+                      className="h-14 w-14 rounded-full object-cover ring-2 ring-slate-200 shadow-sm"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 font-bold text-white text-lg shadow-sm ring-2 ring-teal-100">
+                      {enrollment.user?.name?.charAt(0).toUpperCase() || 'S'}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-950">{enrollment.user?.name}</p>
+                    <p className="text-xs text-slate-500">{enrollment.user?.email}</p>
+                    <p className="mt-1 inline-flex rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold capitalize text-teal-700 ring-1 ring-teal-600/20">
+                      {enrollment.user?.role === 'student' ? 'Student' : enrollment.user?.role}
+                    </p>
+                  </div>
                 </div>
               </div>
 

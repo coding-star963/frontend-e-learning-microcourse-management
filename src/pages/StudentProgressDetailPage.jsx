@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { progressService } from '../services/progressService';
+import { getStorageUrl } from '../utils/imageUrl';
 
 export default function StudentProgressDetailPage() {
   const { id } = useParams();
@@ -47,11 +48,22 @@ export default function StudentProgressDetailPage() {
 
         {progress && (
           <>
-            <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
-                  {progress.student.name?.charAt(0).toUpperCase()}
-                </div>
+                {progress.student.profile_photo ? (
+                  <img
+                    src={getStorageUrl(progress.student.profile_photo)}
+                    alt={progress.student.name}
+                    className="h-14 w-14 rounded-2xl object-cover ring-2 ring-slate-100 shadow-sm"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-base font-bold text-white shadow-sm">
+                    {progress.student.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <h2 className="text-lg font-bold text-slate-950">{progress.student.name}</h2>
                   <p className="text-sm text-slate-500">{progress.student.email}</p>

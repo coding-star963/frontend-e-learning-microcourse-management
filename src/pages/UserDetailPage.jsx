@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
+import { getStorageUrl } from '../utils/imageUrl';
 
 export default function UserDetailPage() {
   const { id } = useParams();
@@ -78,12 +79,15 @@ export default function UserDetailPage() {
             <div className="flex items-center gap-4">
               {user?.profile_photo ? (
                 <img
-                  className="h-16 w-16 rounded-lg object-cover"
-                  src={user.profile_photo}
+                  className="h-16 w-16 rounded-full object-cover ring-4 ring-teal-500/20 shadow-md"
+                  src={getStorageUrl(user.profile_photo)}
                   alt={user.name}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-950 text-2xl font-bold text-white">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl font-bold text-white shadow-md ring-4 ring-slate-100">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
@@ -91,8 +95,8 @@ export default function UserDetailPage() {
                 <h2 className="text-xl font-bold text-slate-950">{user?.name}</h2>
                 <p className="text-sm text-slate-500">{user?.email}</p>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${roleBadge(user?.role)}`}>
-                    {user?.role}
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadge(user?.role)}`}>
+                    {user?.role === 'administrator' ? 'Admin' : user?.role === 'teacher' ? 'Teacher' : 'Student'}
                   </span>
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user?.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
                     {user?.is_active ? 'Active' : 'Inactive'}
@@ -100,10 +104,18 @@ export default function UserDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {user?.role === 'student' && (
+                <Link
+                  to={`/progress/students/${id}`}
+                  className="rounded-lg bg-teal-50 border border-teal-200 px-3.5 py-2 text-sm font-bold text-teal-700 transition hover:bg-teal-100"
+                >
+                  View Progress Telemetry
+                </Link>
+              )}
               <Link
                 to={`/users/${id}/edit`}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
               >
                 Edit user
               </Link>
@@ -111,7 +123,7 @@ export default function UserDetailPage() {
                 type="button"
                 onClick={handleToggleStatus}
                 disabled={toggling}
-                className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                   user?.is_active
                     ? 'border border-rose-300 bg-white text-rose-700 hover:bg-rose-50'
                     : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'

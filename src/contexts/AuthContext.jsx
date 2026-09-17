@@ -70,6 +70,12 @@ function useAuthState() {
     return response.data;
   }, []);
 
+  const deletePhoto = useCallback(async () => {
+    const response = await api.delete('/profile/photo');
+    setUser(response.data.user);
+    return response.data;
+  }, []);
+
   return {
     user,
     loading,
@@ -80,6 +86,7 @@ function useAuthState() {
     updateProfile,
     updatePassword,
     updatePhoto,
+    deletePhoto,
   };
 }
 
@@ -106,6 +113,7 @@ export function AuthProvider({ children }) {
       updateProfile: auth.updateProfile,
       updatePassword: auth.updatePassword,
       updatePhoto: auth.updatePhoto,
+      deletePhoto: auth.deletePhoto,
       isAdmin: auth.user?.role === 'administrator',
       isTeacher: auth.user?.role === 'teacher',
     }}>
