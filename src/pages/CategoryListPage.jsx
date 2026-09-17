@@ -19,23 +19,25 @@ export default function CategoryListPage() {
       setCategories(response.data.data);
     } catch {
       setError('Failed to load categories.');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    let cancelled = false;
-    const loadCategories = async () => {
+    const loadData = async () => {
+      setLoading(true);
       try {
         const response = await categoryService.getAll({ per_page: 100 });
-        if (!cancelled) setCategories(response.data.data);
+        setCategories(response.data.data);
       } catch {
-        if (!cancelled) setError('Failed to load categories.');
+        setError('Failed to load categories.');
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
-    loadCategories();
-    return () => { cancelled = true; };
+
+    loadData();
   }, []);
 
   const resetForm = () => {
