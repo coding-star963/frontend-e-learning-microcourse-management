@@ -21,6 +21,10 @@ export const enrollmentService = {
     return api.delete(`/enrollments/${id}`);
   },
 
+  getStudents(params = {}) {
+    return api.get('/enrollments/students', { params });
+  },
+
   getStats() {
     return api.get('/enrollments/stats');
   },

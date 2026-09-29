@@ -219,7 +219,7 @@ export default function ProfilePage() {
           <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
             <div className="border-b border-slate-100 pb-5">
               <h2 className="text-lg font-bold text-slate-900">Personal Information</h2>
-              <p className="mt-1 text-xs text-slate-500">Update your public staff identity and communication address.</p>
+              <p className="mt-1 text-xs text-slate-500">Update your public profile identity and communication address.</p>
             </div>
 
             <form onSubmit={handleProfileUpdate} className="mt-6 space-y-5">

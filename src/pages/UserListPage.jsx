@@ -80,7 +80,7 @@ export default function UserListPage() {
 
 
   return (
-    <AppShell title="Staff & Accounts" eyebrow="Administration">
+    <AppShell title="User Management" eyebrow="Administration">
       <div className="space-y-6 pb-12">
         {error && <Alert>{error}</Alert>}
 
@@ -110,7 +110,7 @@ export default function UserListPage() {
               <input
                 id="search"
                 type="text"
-                placeholder="Search staff or students by name, email..."
+                placeholder="Search users by name or email..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);

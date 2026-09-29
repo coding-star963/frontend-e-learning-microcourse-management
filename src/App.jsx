@@ -11,6 +11,7 @@ import UserListPage from './pages/UserListPage';
 import UserCreatePage from './pages/UserCreatePage';
 import UserEditPage from './pages/UserEditPage';
 import UserDetailPage from './pages/UserDetailPage';
+import TeacherListPage from './pages/TeacherListPage';
 import CourseListPage from './pages/CourseListPage';
 import CourseCreatePage from './pages/CourseCreatePage';
 import CourseEditPage from './pages/CourseEditPage';
@@ -189,6 +190,11 @@ function AppRoutes() {
       <Route path="/announcements/history" element={
         <ProtectedRoute>
           <NotificationHistoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/teachers" element={
+        <ProtectedRoute allowedRoles={['administrator']}>
+          <TeacherListPage />
         </ProtectedRoute>
       } />
       <Route path="/users" element={

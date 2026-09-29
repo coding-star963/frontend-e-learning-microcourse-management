@@ -210,6 +210,8 @@ export default function CourseListPage() {
                             {course.title}
                           </Link>
                           <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                            {course.section && <span className="font-semibold text-slate-500">{course.section}</span>}
+                            {course.section && course.duration && <span>&bull;</span>}
                             {course.duration && <span>{course.duration}</span>}
                             {course.lessons_count !== undefined && (
                               <>
@@ -244,7 +246,7 @@ export default function CourseListPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs font-medium text-slate-600">
-                        {course.teacher?.name || 'Staff'}
+                        {course.teacher?.name || 'Unassigned'}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">

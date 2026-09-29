@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
+import PasswordInput from '../components/PasswordInput';
 import { enrollmentService } from '../services/enrollmentService';
 import { courseService } from '../services/courseService';
-import api from '../services/api';
 import { useDebounce } from '../hooks/useDebounce';
 import { PlusIcon, SearchIcon, EnrollmentsIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
@@ -28,11 +28,14 @@ export default function EnrollmentListPage() {
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ user_id: '', course_id: '' });
+  const emptyAddForm = { mode: 'existing', user_id: '', course_id: '', name: '', email: '', password: '' };
+  const [addForm, setAddForm] = useState(emptyAddForm);
+  const [addError, setAddError] = useState('');
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [saving, setSaving] = useState(false);
   const debouncedSearch = useDebounce(search);
+  const enrolledStudents = students.filter((s) => s.enrollments_count > 0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,7 +49,7 @@ export default function EnrollmentListPage() {
           enrollmentService.getAll(params),
           enrollmentService.getStats(),
           courseService.getAll({ per_page: 100 }),
-          api.get('/users', { params: { role: 'student', per_page: 100 } }),
+          enrollmentService.getStudents(),
         ]);
 
         setEnrollments(enrollmentsRes.data.data);
@@ -64,18 +67,30 @@ export default function EnrollmentListPage() {
     loadData();
   }, [statusFilter, page, reloadKey, debouncedSearch]);
 
+  const closeAddModal = () => {
+    setShowAddModal(false);
+    setAddForm(emptyAddForm);
+    setAddError('');
+  };
+
   const handleAddEnrollment = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
+    setAddError('');
+    setSuccess('');
     try {
-      await enrollmentService.create(addForm);
-      setSuccess('Student enrolled successfully.');
-      setShowAddModal(false);
-      setAddForm({ user_id: '', course_id: '' });
+      const payload = addForm.mode === 'existing'
+        ? { user_id: addForm.user_id, course_id: addForm.course_id }
+        : { name: addForm.name, email: addForm.email, password: addForm.password, course_id: addForm.course_id };
+      const response = await enrollmentService.create(payload);
+      setSuccess(response.data.message || 'Student enrolled successfully.');
+      closeAddModal();
+      setPage(1);
       setReloadKey((k) => k + 1);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to enroll student.');
+      const errors = err.response?.data?.errors;
+      const firstError = errors ? Object.values(errors)[0]?.[0] : null;
+      setAddError(firstError || err.response?.data?.message || 'Failed to enroll student.');
     } finally {
       setSaving(false);
     }
@@ -149,7 +164,7 @@ export default function EnrollmentListPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => { setAddForm(emptyAddForm); setAddError(''); setShowAddModal(true); }}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition-all hover:brightness-110"
           >
             <PlusIcon className="h-4 w-4" />
@@ -162,30 +177,99 @@ export default function EnrollmentListPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
               className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
-              onClick={() => !saving && setShowAddModal(false)}
+              onClick={() => !saving && closeAddModal()}
             />
             <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-900/10">
               <div className="border-b border-slate-100 pb-4">
                 <h3 className="text-lg font-bold text-slate-900">Enroll Student in Micro-Course</h3>
-                <p className="text-xs text-slate-500">Select an existing registered student and target course.</p>
+                <p className="text-xs text-slate-500">Pick an existing student or register a new one, then choose the course.</p>
               </div>
               <form onSubmit={handleAddEnrollment} className="mt-5 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                    Student Account <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={addForm.user_id}
-                    onChange={(e) => setAddForm({ ...addForm, user_id: e.target.value })}
-                    required
-                    className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
-                  >
-                    <option value="">Select a student...</option>
-                    {students.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
-                    ))}
-                  </select>
+                {addError && <Alert type="error">{addError}</Alert>}
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+                  {[
+                    ['existing', 'Existing Student'],
+                    ['new', 'New Student'],
+                  ].map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setAddForm({ ...addForm, mode })}
+                      className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
+                        addForm.mode === mode ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
+                {addForm.mode === 'existing' ? (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                      Student Account <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={addForm.user_id}
+                      onChange={(e) => setAddForm({ ...addForm, user_id: e.target.value })}
+                      required
+                      className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
+                    >
+                      <option value="">Select a student...</option>
+                      {students.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
+                      ))}
+                    </select>
+                    {students.length === 0 && (
+                      <p className="mt-1 text-xs text-slate-500">No student accounts yet. Switch to "New Student" to register one.</p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                        Full Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={addForm.name}
+                        onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                        required
+                        className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
+                        placeholder="e.g., Juan Dela Cruz"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                        Email Address <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={addForm.email}
+                        onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                        required
+                        className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
+                        placeholder="student@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                        Temporary Password <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="mt-1.5">
+                        <PasswordInput
+                          value={addForm.password}
+                          onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                          required
+                          minLength={8}
+                          autoComplete="new-password"
+                          className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
+                          placeholder="Min. 8 characters"
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">The student signs in to the mobile app with this email and password.</p>
+                    </div>
+                  </>
+                )}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
                     Micro-Course <span className="text-rose-500">*</span>
@@ -205,7 +289,7 @@ export default function EnrollmentListPage() {
                 <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={closeAddModal}
                     className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                   >
                     Cancel
@@ -222,6 +306,35 @@ export default function EnrollmentListPage() {
             </div>
           </div>
         )}
+
+        {/* Currently Enrolled Students */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900">Currently Enrolled Students</h3>
+            <span className="rounded-md bg-teal-50 px-2 py-0.5 text-xs font-bold text-teal-700">
+              {enrolledStudents.length} student{enrolledStudents.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {enrolledStudents.length === 0 ? (
+            <p className="mt-3 text-xs text-slate-500">No students are enrolled yet. Use "Enroll Student" to add one.</p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {enrolledStudents.map((s) => (
+                <Link
+                  key={s.id}
+                  to={`/students/${s.id}/enrollments`}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1 pr-3 text-xs font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 text-[10px] font-bold text-white">
+                    {s.name?.charAt(0).toUpperCase()}
+                  </span>
+                  {s.name}
+                  <span className="text-slate-400">&middot; {s.enrollments_count} course{s.enrollments_count !== 1 ? 's' : ''}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Filter and Search */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">

@@ -17,7 +17,7 @@ export default function AuthLayout({ title, subtitle, children }) {
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold tracking-tight text-white">MicroLearn</span>
                 <span className="rounded-full bg-teal-400/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-300 ring-1 ring-teal-400/30">
-                  Staff Console
+                  Admin Console
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium">Enterprise Learning Management</p>
@@ -34,7 +34,7 @@ export default function AuthLayout({ title, subtitle, children }) {
               Precision microcourses delivered at scale.
             </h1>
             <p className="mt-4 text-base leading-relaxed text-slate-300">
-              Curate bite-sized lessons, track student milestones, manage instructors, and analyze learning performance all within one unified staff console.
+              Curate bite-sized lessons, track student milestones, manage instructors, and analyze learning performance all within one unified admin console.
             </p>
 
             <div className="mt-10 grid grid-cols-3 gap-4">
@@ -75,7 +75,7 @@ export default function AuthLayout({ title, subtitle, children }) {
               </div>
               <div>
                 <p className="text-base font-bold text-white">MicroLearn</p>
-                <p className="text-xs text-slate-400">Staff Console</p>
+                <p className="text-xs text-slate-400">Admin Console</p>
               </div>
             </div>
 
@@ -83,7 +83,7 @@ export default function AuthLayout({ title, subtitle, children }) {
             <div className="rounded-3xl border border-slate-200/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl ring-1 ring-white/10 sm:p-10">
               <div>
                 <span className="inline-flex rounded-full bg-teal-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-teal-300 ring-1 ring-teal-400/30">
-                  Staff Access
+                  Admin Access
                 </span>
                 <h2 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
                   {title}

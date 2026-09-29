@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthLayout
       title="Reset your password"
-      subtitle="Enter your registered staff email address to receive password reset instructions."
+      subtitle="Enter your registered admin email address to receive password reset instructions."
     >
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         {error && <Alert>{error}</Alert>}
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
 
         <div>
           <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-            Staff email address
+            Admin email address
           </label>
           <div className="relative mt-2">
             <input

@@ -97,7 +97,11 @@ export default function CategoryListPage() {
   };
 
   const handleDelete = async (category) => {
-    if (!window.confirm(`Delete "${category.name}"? This cannot be undone.`)) {
+    const count = category.courses_count ?? 0;
+    const note = count > 0
+      ? ` Its ${count} course${count !== 1 ? 's' : ''} will be kept but become uncategorized.`
+      : '';
+    if (!window.confirm(`Delete "${category.name}"?${note} This cannot be undone.`)) {
       return;
     }
 
@@ -196,11 +200,13 @@ export default function CategoryListPage() {
                   <label htmlFor="description" className="block text-xs font-bold uppercase tracking-wider text-slate-600">
                     Description
                   </label>
+                  <p className="mt-0.5 text-[11px] text-slate-400">Shown to administrators and learners browsing this category.</p>
                   <textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
+                    maxLength={1000}
                     className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
                     placeholder="Describe what learners will find in this category..."
                   />
@@ -254,7 +260,7 @@ export default function CategoryListPage() {
                     <div className="min-w-0">
                       <h3 className="text-base font-bold text-slate-900">{category.name}</h3>
                       {category.description && (
-                        <p className="mt-1 text-xs text-slate-500 leading-relaxed line-clamp-1">{category.description}</p>
+                        <p className="mt-1 text-xs text-slate-500 leading-relaxed line-clamp-2">{category.description}</p>
                       )}
                       <div className="mt-2 flex items-center gap-2">
                         <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">

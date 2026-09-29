@@ -3,10 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { courseService, categoryService } from '../services/courseService';
+import { teacherService } from '../services/teacherService';
+import { useAuth } from '../hooks/useAuth';
 
 export default function CourseCreatePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'administrator';
   const [categories, setCategories] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -15,6 +20,8 @@ export default function CourseCreatePage() {
     category_id: '',
     difficulty_level: 'beginner',
     duration: '',
+    teacher_id: '',
+    section: '',
     status: 'draft',
     thumbnail: null,
   });
@@ -29,8 +36,18 @@ export default function CourseCreatePage() {
       }
     };
 
+    const fetchTeachers = async () => {
+      try {
+        const response = await teacherService.getAll({ active_only: 1 });
+        setTeachers(response.data.data);
+      } catch {
+        setError('Failed to load teachers.');
+      }
+    };
+
     fetchCategories();
-  }, []);
+    if (isAdmin) fetchTeachers();
+  }, [isAdmin]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -145,6 +162,50 @@ export default function CourseCreatePage() {
                   <option value="intermediate">Intermediate</option>
                   <option value="advanced">Advanced</option>
                 </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {isAdmin && (
+                <div>
+                  <label htmlFor="teacher_id" className="block text-sm font-semibold text-slate-700">
+                    Teacher Name <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    id="teacher_id"
+                    name="teacher_id"
+                    value={formData.teacher_id}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  >
+                    <option value="">Select teacher</option>
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                  {teachers.length === 0 && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      No teachers yet. Add one in <Link to="/teachers" className="font-semibold text-teal-600">Teacher Management</Link>.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="section" className="block text-sm font-semibold text-slate-700">
+                  Block / Section
+                </label>
+                <input
+                  type="text"
+                  id="section"
+                  name="section"
+                  value={formData.section}
+                  onChange={handleChange}
+                  maxLength={100}
+                  className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  placeholder="e.g., BSIT 2-A"
+                />
               </div>
             </div>
 

@@ -137,7 +137,7 @@ export default function CourseDetailPage() {
               <p className="mt-4 text-sm leading-6 text-slate-600">{course.description}</p>
             )}
 
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
               <div className="rounded-lg bg-slate-50 p-3">
                 <p className="text-xs font-medium text-slate-500">Category</p>
                 <p className="mt-1 text-sm font-semibold text-slate-950">
@@ -154,6 +154,12 @@ export default function CourseDetailPage() {
                 <p className="text-xs font-medium text-slate-500">Teacher</p>
                 <p className="mt-1 text-sm font-semibold text-slate-950">
                   {course.teacher?.name || 'Unknown'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs font-medium text-slate-500">Block / Section</p>
+                <p className="mt-1 text-sm font-semibold text-slate-950">
+                  {course.section || 'Not set'}
                 </p>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">

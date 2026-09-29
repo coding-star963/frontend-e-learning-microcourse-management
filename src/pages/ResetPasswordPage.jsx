@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Alert from '../components/Alert';
 import AuthLayout from '../components/AuthLayout';
+import PasswordInput from '../components/PasswordInput';
 import api from '../services/api';
 
 export default function ResetPasswordPage() {
@@ -100,10 +101,9 @@ export default function ResetPasswordPage() {
             New password
           </label>
           <div className="relative mt-2">
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="new-password"
               required
               className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
@@ -119,10 +119,9 @@ export default function ResetPasswordPage() {
             Confirm new password
           </label>
           <div className="relative mt-2">
-            <input
+            <PasswordInput
               id="password_confirmation"
               name="password_confirmation"
-              type="password"
               autoComplete="new-password"
               required
               className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"

@@ -13,6 +13,7 @@ import {
   ProfileIcon,
   LogoutIcon,
   ShieldCheckIcon,
+  TeachersIcon,
 } from './Icons';
 import { getStorageUrl } from '../utils/imageUrl';
 
@@ -24,7 +25,8 @@ const navItems = [
   { to: '/enrollments', label: 'Enrollments', icon: EnrollmentsIcon },
   { to: '/progress/students', label: 'Student Progress', icon: ProgressIcon },
   { to: '/announcements', label: 'Announcements', icon: AnnouncementsIcon },
-  { to: '/users', label: 'Staff & Users', icon: UsersIcon, adminOnly: true },
+  { to: '/teachers', label: 'Teacher Management', icon: TeachersIcon, adminOnly: true },
+  { to: '/users', label: 'User Management', icon: UsersIcon, adminOnly: true },
   { to: '/profile', label: 'My Account', icon: ProfileIcon },
 ];
 
@@ -59,7 +61,11 @@ export default function AppShell({ title, eyebrow, children }) {
           <div className="p-6 border-b border-slate-800/60">
             <Link to="/dashboard" className="flex items-center gap-3.5 group">
               <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-600 via-teal-500 to-cyan-400 text-white font-black text-lg shadow-lg shadow-teal-500/20 group-hover:scale-105 transition-transform duration-200">
-                <span className="tracking-tighter">MC</span>
+                {user?.role === 'administrator' ? (
+                  <span className="text-[10px] uppercase tracking-wide">Admin</span>
+                ) : (
+                  <span className="tracking-tighter">MC</span>
+                )}
                 <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-300"></span>
@@ -71,7 +77,7 @@ export default function AppShell({ title, eyebrow, children }) {
                     MicroLearn
                   </span>
                   <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] font-semibold text-teal-400 ring-1 ring-teal-500/30">
-                    Staff
+                    {user?.role === 'administrator' ? 'Admin' : 'Teacher'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 tracking-wide font-medium">
@@ -267,7 +273,7 @@ export default function AppShell({ title, eyebrow, children }) {
               </div>
             </div>
             <p className="mt-4 text-sm text-slate-600 leading-relaxed">
-              Are you sure you want to end your session? You will need your staff credentials to log in again.
+              Are you sure you want to end your session? You will need your admin credentials to log in again.
             </p>
             <div className="mt-6 flex items-center justify-end gap-3">
               <button

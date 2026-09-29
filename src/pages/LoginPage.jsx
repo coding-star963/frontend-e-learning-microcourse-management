@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Alert from '../components/Alert';
 import AuthLayout from '../components/AuthLayout';
+import PasswordInput from '../components/PasswordInput';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -67,10 +68,9 @@ export default function LoginPage() {
             </Link>
           </div>
           <div className="relative mt-2">
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="current-password"
               required
               className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"

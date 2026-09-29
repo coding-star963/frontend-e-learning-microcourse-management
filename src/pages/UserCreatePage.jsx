@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
@@ -9,11 +9,15 @@ const inputClass =
 
 export default function UserCreatePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('return') === 'teachers' ? '/teachers' : '/users';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [role, setRole] = useState('teacher');
+  const [role, setRole] = useState(
+    ['administrator', 'teacher', 'student'].includes(searchParams.get('role')) ? searchParams.get('role') : 'teacher'
+  );
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +34,7 @@ export default function UserCreatePage() {
         password_confirmation: passwordConfirmation,
         role,
       });
-      navigate('/users');
+      navigate(returnTo);
     } catch (err) {
       if (err.response?.status === 422) {
         const errors = err.response.data.errors;
@@ -142,7 +146,7 @@ export default function UserCreatePage() {
                 {loading ? 'Creating...' : 'Create user'}
               </button>
               <Link
-                to="/users"
+                to={returnTo}
                 className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
               >
                 Cancel

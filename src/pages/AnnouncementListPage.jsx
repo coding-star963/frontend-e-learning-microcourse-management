@@ -161,7 +161,7 @@ export default function AnnouncementListPage() {
                 <AnnouncementsIcon className="h-6 w-6" />
               </div>
               <h3 className="mt-4 text-base font-bold text-slate-900">No announcements found</h3>
-              <p className="mt-1 text-sm text-slate-500">Create your first announcement to notify staff or students.</p>
+              <p className="mt-1 text-sm text-slate-500">Create your first announcement to notify teachers or students.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
