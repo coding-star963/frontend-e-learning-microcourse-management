@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Alert from '../components/Alert';
 import AuthLayout from '../components/AuthLayout';
 import api from '../services/api';
@@ -9,8 +9,6 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [token, setToken] = useState('');
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,10 +18,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const response = await api.post('/forgot-password', { email });
-      setMessage(response.data.message || 'Password reset token generated successfully.');
-      if (response.data.token) {
-        setToken(response.data.token);
-      }
+      setMessage(response.data.message || 'Password reset instructions have been sent to your email address.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to request password reset. Please try again.');
     } finally {
@@ -41,21 +36,13 @@ export default function ForgotPasswordPage() {
         {message && (
           <div className="rounded-2xl border border-teal-500/30 bg-teal-950/40 p-4 text-sm text-teal-300">
             <p className="font-semibold">{message}</p>
-            {token && (
-              <div className="mt-3">
-                <p className="text-xs uppercase tracking-wider text-teal-400 font-bold">Your Reset Token:</p>
-                <code className="mt-1 block break-all rounded-xl bg-slate-950 p-2.5 text-xs text-teal-200 border border-teal-500/20 font-mono">
-                  {token}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`)}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 px-3.5 py-1.5 text-xs font-bold text-slate-950 hover:brightness-110"
-                >
-                  Proceed to Reset Password &rarr;
-                </button>
-              </div>
-            )}
+            <p className="mt-2 text-xs text-teal-400">
+              Open the link in the email, or{' '}
+              <Link to={`/reset-password?email=${encodeURIComponent(email)}`} className="font-bold underline hover:text-teal-300">
+                enter the reset token here
+              </Link>
+              .
+            </p>
           </div>
         )}
 
@@ -83,7 +70,7 @@ export default function ForgotPasswordPage() {
           disabled={loading}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-400 px-4 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-teal-500/25 transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-teal-400/40 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? 'Sending request...' : 'Generate Reset Token'}
+          {loading ? 'Sending request...' : 'Send Reset Instructions'}
         </button>
 
         <div className="text-center text-sm pt-2">

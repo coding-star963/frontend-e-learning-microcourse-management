@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { lessonService } from '../services/lessonService';
+import { toIsoString } from '../utils/dateTime';
 
 export default function LessonCreatePage() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function LessonCreatePage() {
     description: '',
     status: 'draft',
     availability: 'free',
+    available_at: '',
     is_free_preview: false,
     duration_seconds: '',
     video: null,
@@ -34,7 +36,10 @@ export default function LessonCreatePage() {
     setError('');
 
     try {
-      const response = await lessonService.create(slug, formData);
+      const response = await lessonService.create(slug, {
+        ...formData,
+        available_at: formData.availability === 'scheduled' ? toIsoString(formData.available_at) : '',
+      });
       navigate(`/courses/${slug}/lessons/${response.data.lesson.id}`);
     } catch (err) {
       if (err.response?.status === 422) {
@@ -131,6 +136,23 @@ export default function LessonCreatePage() {
                   <option value="scheduled">Scheduled</option>
                 </select>
               </div>
+
+              {formData.availability === 'scheduled' && (
+                <div>
+                  <label htmlFor="available_at" className="block text-sm font-semibold text-slate-700">
+                    Available From
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="available_at"
+                    name="available_at"
+                    required
+                    value={formData.available_at}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+              )}
 
               <div>
                 <label htmlFor="duration_seconds" className="block text-sm font-semibold text-slate-700">

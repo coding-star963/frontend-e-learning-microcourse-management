@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { lessonService } from '../services/lessonService';
+import { toIsoString, toLocalInputValue } from '../utils/dateTime';
 
 export default function LessonEditPage() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function LessonEditPage() {
     description: '',
     status: 'draft',
     availability: 'free',
+    available_at: '',
     is_free_preview: false,
     duration_seconds: '',
     video: null,
@@ -31,6 +33,7 @@ export default function LessonEditPage() {
           description: lesson.description || '',
           status: lesson.status,
           availability: lesson.availability,
+          available_at: toLocalInputValue(lesson.available_at),
           is_free_preview: lesson.is_free_preview,
           duration_seconds: lesson.duration_seconds || '',
           video: null,
@@ -60,7 +63,10 @@ export default function LessonEditPage() {
     setError('');
 
     try {
-      await lessonService.update(slug, id, formData);
+      await lessonService.update(slug, id, {
+        ...formData,
+        available_at: formData.availability === 'scheduled' ? toIsoString(formData.available_at) : '',
+      });
       navigate(`/courses/${slug}/lessons/${id}`);
     } catch (err) {
       if (err.response?.status === 422) {
@@ -164,6 +170,23 @@ export default function LessonEditPage() {
                   <option value="scheduled">Scheduled</option>
                 </select>
               </div>
+
+              {formData.availability === 'scheduled' && (
+                <div>
+                  <label htmlFor="available_at" className="block text-sm font-semibold text-slate-700">
+                    Available From
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="available_at"
+                    name="available_at"
+                    required
+                    value={formData.available_at}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+              )}
 
               <div>
                 <label htmlFor="duration_seconds" className="block text-sm font-semibold text-slate-700">

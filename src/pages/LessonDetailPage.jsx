@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { lessonService } from '../services/lessonService';
+import { formatDateTime, toIsoString, toLocalInputValue } from '../utils/dateTime';
 
 const statusColors = {
   draft: 'bg-amber-50 text-amber-700',
@@ -32,6 +33,8 @@ export default function LessonDetailPage() {
   const [success, setSuccess] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [uploadingResource, setUploadingResource] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState('');
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -85,11 +88,17 @@ export default function LessonDetailPage() {
     }
   };
 
-  const handleAvailabilityChange = async (availability) => {
+  const openScheduleForm = () => {
+    setScheduleAt(toLocalInputValue(lesson.available_at));
+    setShowSchedule(true);
+  };
+
+  const handleAvailabilityChange = async (availability, availableAt = null) => {
     setError('');
     setSuccess('');
     try {
-      const response = await lessonService.updateAvailability(slug, id, availability);
+      const response = await lessonService.updateAvailability(slug, id, availability, availableAt);
+      setShowSchedule(false);
       setSuccess(response.data.message);
       const res = await lessonService.getById(slug, id);
       setLesson(res.data.data);
@@ -231,7 +240,7 @@ export default function LessonDetailPage() {
                 {['free', 'locked', 'scheduled'].map((avail) => (
                   <button
                     key={avail}
-                    onClick={() => handleAvailabilityChange(avail)}
+                    onClick={() => (avail === 'scheduled' ? openScheduleForm() : handleAvailabilityChange(avail))}
                     className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition ${
                       lesson.availability === avail
                         ? 'bg-teal-600 text-white'
@@ -242,6 +251,39 @@ export default function LessonDetailPage() {
                   </button>
                 ))}
               </div>
+              {showSchedule && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <label htmlFor="schedule_at" className="text-xs font-semibold text-slate-600">Opens to students on</label>
+                  <input
+                    id="schedule_at"
+                    type="datetime-local"
+                    value={scheduleAt}
+                    onChange={(e) => setScheduleAt(e.target.value)}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                  <button
+                    type="button"
+                    disabled={!scheduleAt}
+                    onClick={() => handleAvailabilityChange('scheduled', toIsoString(scheduleAt))}
+                    className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    Save Schedule
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowSchedule(false)}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+              {!showSchedule && lesson.availability === 'scheduled' && lesson.available_at && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Opens to students on {formatDateTime(lesson.available_at)}
+                  {lesson.is_available ? ' (now open)' : ''}
+                </p>
+              )}
             </div>
 
             <div className="mt-6 border-t border-slate-200 pt-5">

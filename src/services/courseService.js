@@ -30,12 +30,11 @@ export const courseService = {
     const formData = new FormData();
     formData.append('_method', 'PUT');
     Object.keys(data).forEach((key) => {
-      if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
-        if (key === 'thumbnail' && data[key] instanceof File) {
-          formData.append(key, data[key]);
-        } else {
-          formData.append(key, data[key]);
-        }
+      if (key === 'thumbnail') {
+        if (data[key] instanceof File) formData.append(key, data[key]);
+      } else if (data[key] !== null && data[key] !== undefined) {
+        // Empty strings are sent too, so optional fields (description, section...) can be cleared.
+        formData.append(key, data[key]);
       }
     });
 

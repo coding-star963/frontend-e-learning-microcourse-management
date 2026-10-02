@@ -17,6 +17,7 @@ export default function CourseCreatePage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    learning_objectives: '',
     category_id: '',
     difficulty_level: 'beginner',
     duration: '',
@@ -125,6 +126,22 @@ export default function CourseCreatePage() {
                 className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
                 placeholder="Brief description of the course..."
               />
+            </div>
+
+            <div>
+              <label htmlFor="learning_objectives" className="block text-sm font-semibold text-slate-700">
+                Learning Objectives
+              </label>
+              <textarea
+                id="learning_objectives"
+                name="learning_objectives"
+                value={formData.learning_objectives}
+                onChange={handleChange}
+                rows={4}
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                placeholder="One objective per line, e.g. Build a responsive layout"
+              />
+              <p className="mt-1 text-xs text-slate-500">Shown to students in the mobile app. Write one objective per line.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">

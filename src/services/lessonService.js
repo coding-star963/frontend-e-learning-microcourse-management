@@ -64,8 +64,11 @@ export const lessonService = {
     return api.put(`/courses/${courseSlug}/lessons/${lessonId}/status`, { status });
   },
 
-  updateAvailability(courseSlug, lessonId, availability) {
-    return api.put(`/courses/${courseSlug}/lessons/${lessonId}/availability`, { availability });
+  updateAvailability(courseSlug, lessonId, availability, availableAt = null) {
+    return api.put(`/courses/${courseSlug}/lessons/${lessonId}/availability`, {
+      availability,
+      available_at: availableAt,
+    });
   },
 
   reorder(courseSlug, lessonIds) {

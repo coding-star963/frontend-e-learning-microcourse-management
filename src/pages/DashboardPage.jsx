@@ -313,7 +313,7 @@ export default function DashboardPage() {
               </div>
               <div className="rounded-xl bg-slate-100/60 p-4 ring-1 ring-slate-400/10">
                 <p className="text-2xl font-black text-slate-500">
-                  {isAdmin ? data.summary.archived_courses : 0}
+                  {data.summary.archived_courses}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-slate-600">Archived</p>
               </div>
