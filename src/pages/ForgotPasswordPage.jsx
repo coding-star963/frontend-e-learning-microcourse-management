@@ -7,6 +7,7 @@ import api from '../services/api';
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [devToken, setDevToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,11 +15,14 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     setMessage('');
+    setDevToken('');
     setLoading(true);
 
     try {
       const response = await api.post('/forgot-password', { email });
       setMessage(response.data.message || 'Password reset instructions have been sent to your email address.');
+      // Only returned when the backend runs locally (no real email is sent).
+      setDevToken(response.data.dev_token || '');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to request password reset. Please try again.');
     } finally {
@@ -33,7 +37,20 @@ export default function ForgotPasswordPage() {
     >
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         {error && <Alert>{error}</Alert>}
-        {message && (
+        {message && devToken && (
+          <div className="rounded-2xl border border-teal-500/30 bg-teal-950/40 p-4 text-sm text-teal-300">
+            <p className="font-semibold">{message}</p>
+            <p className="mt-3 text-xs font-bold uppercase tracking-wider text-teal-400">Reset token</p>
+            <p className="mt-1 break-all rounded-lg bg-slate-900/80 p-2 font-mono text-xs text-teal-200">{devToken}</p>
+            <Link
+              to={`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(devToken)}`}
+              className="mt-3 inline-block text-xs font-bold underline hover:text-teal-300"
+            >
+              Continue to reset password &rarr;
+            </Link>
+          </div>
+        )}
+        {message && !devToken && (
           <div className="rounded-2xl border border-teal-500/30 bg-teal-950/40 p-4 text-sm text-teal-300">
             <p className="font-semibold">{message}</p>
             <p className="mt-2 text-xs text-teal-400">
