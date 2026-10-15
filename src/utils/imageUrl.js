@@ -1,18 +1,15 @@
-const BACKEND_URL = (import.meta.env.VITE_API_TARGET || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+// /storage is proxied to the Laravel API by the Vite dev server, so files are
+// loaded from the same origin as the page. That works on localhost, a LAN IP
+// and a public ngrok URL alike.
+const LEGACY_BACKEND = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::(?:80|8000|8001))?(?=\/)/;
 
 export function getStorageUrl(path) {
   if (!path) return null;
   if (typeof path !== 'string') return null;
 
-  // Handle localhost/legacy backend URLs
-  if (path.startsWith('http://localhost/') || path.startsWith('http://localhost:80/')) {
-    return path.replace(/^http:\/\/localhost(?::80)?/, BACKEND_URL);
-  }
-  if (path.startsWith('http://127.0.0.1:8001/')) {
-    return path.replace('http://127.0.0.1:8001', BACKEND_URL);
-  }
-  if (path.startsWith('http://127.0.0.1:8000/')) {
-    return path.replace('http://127.0.0.1:8000', BACKEND_URL);
+  // Backend URLs built for localhost -> same-origin path
+  if (LEGACY_BACKEND.test(path)) {
+    return path.replace(LEGACY_BACKEND, '');
   }
 
   // Already a full external URL
@@ -22,11 +19,11 @@ export function getStorageUrl(path) {
 
   // Relative storage path
   if (path.startsWith('/storage/')) {
-    return `${BACKEND_URL}${path}`;
+    return path;
   }
   if (path.startsWith('storage/')) {
-    return `${BACKEND_URL}/${path}`;
+    return `/${path}`;
   }
 
-  return `${BACKEND_URL}/storage/${path.replace(/^\/+/, '')}`;
+  return `/storage/${path.replace(/^\/+/, '')}`;
 }

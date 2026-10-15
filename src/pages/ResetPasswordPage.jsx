@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Alert from '../components/Alert';
 import AuthLayout from '../components/AuthLayout';
 import PasswordInput from '../components/PasswordInput';
 import api from '../services/api';
 
 export default function ResetPasswordPage() {
-  const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState(() => searchParams.get('email') || '');
-  const [token, setToken] = useState(() => searchParams.get('token') || '');
+  // Set by the forgot-password page after the email is verified.
+  const { email = '', token = '' } = useLocation().state || {};
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [message, setMessage] = useState('');
@@ -39,17 +38,32 @@ export default function ResetPasswordPage() {
         const firstError = errors ? Object.values(errors)[0]?.[0] : null;
         setError(firstError || err.response.data.message || 'Validation failed.');
       } else {
-        setError(err.response?.data?.message || 'Failed to reset password. Please verify your token and try again.');
+        setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  if (!email || !token) {
+    return (
+      <AuthLayout title="Set new password" subtitle="Enter your email first to reset your password.">
+        <div className="mt-8 space-y-5 text-center">
+          <Link
+            to="/forgot-password"
+            className="inline-block text-sm font-semibold text-teal-400 transition-colors hover:text-teal-300"
+          >
+            Go to Forgot Password &rarr;
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout
       title="Set new password"
-      subtitle="Enter your email, reset token, and choose a strong new password."
+      subtitle={`Choose a new password for ${email}.`}
     >
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         {error && <Alert>{error}</Alert>}
@@ -58,43 +72,6 @@ export default function ResetPasswordPage() {
             {message} Redirecting to login...
           </div>
         )}
-
-        <div>
-          <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-            Email address
-          </label>
-          <div className="relative mt-2">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="token" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-            Reset token
-          </label>
-          <div className="relative mt-2">
-            <input
-              id="token"
-              name="token"
-              type="text"
-              required
-              className="block w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none font-mono transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
-              placeholder="Paste token received"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-            />
-          </div>
-        </div>
 
         <div>
           <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
