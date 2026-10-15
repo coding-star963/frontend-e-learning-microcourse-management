@@ -12,11 +12,14 @@ const backendProxy = {
   target: apiTarget,
   changeOrigin: true,
   configure: (proxy) => {
-    proxy.on('proxyReq', (proxyReq, req) => {
+    // Set on the incoming request ('start' runs before the upstream request is
+    // built), not in 'proxyReq': with "Expect: 100-continue" uploads the upstream
+    // headers are already sent by then.
+    proxy.on('start', (req) => {
       const host = req.headers['x-forwarded-host'] || req.headers.host
       const proto = req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http')
-      if (host) proxyReq.setHeader('X-Forwarded-Host', String(host).split(',')[0].trim())
-      proxyReq.setHeader('X-Forwarded-Proto', String(proto).split(',')[0].trim())
+      if (host) req.headers['x-forwarded-host'] = String(host).split(',')[0].trim()
+      req.headers['x-forwarded-proto'] = String(proto).split(',')[0].trim()
     })
   },
 }

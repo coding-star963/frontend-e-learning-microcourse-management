@@ -271,7 +271,7 @@ export default function CourseCreatePage() {
                 accept="image/*"
                 className="mt-1 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-teal-700 hover:file:bg-teal-100"
               />
-              <p className="mt-1 text-xs text-slate-500">Max 2MB. PNG, JPG, or GIF.</p>
+              <p className="mt-1 text-xs text-slate-500">Max 10MB. PNG, JPG, or GIF.</p>
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5">

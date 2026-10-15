@@ -19,6 +19,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // PHP rejects oversized uploads before Laravel runs, so the body is not JSON.
+    if (error.response?.status === 413) {
+      error.response.data = { message: 'The file is too large to upload. Videos and files can be up to 100MB, images up to 10MB.' };
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       // Only redirect to login if not already on public auth pages

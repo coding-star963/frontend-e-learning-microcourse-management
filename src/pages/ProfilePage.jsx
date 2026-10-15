@@ -79,7 +79,7 @@ export default function ProfilePage() {
       setPhoto(null);
       setPreview(null);
     } catch (err) {
-      setPhotoError(err.response?.data?.message || 'Failed to update photo. Ensure file is JPG/PNG under 2MB.');
+      setPhotoError(err.response?.data?.message || 'Failed to update photo. Ensure file is JPG/PNG under 10MB.');
     } finally {
       setLoading(false);
     }
