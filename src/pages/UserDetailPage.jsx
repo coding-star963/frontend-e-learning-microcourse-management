@@ -3,14 +3,38 @@ import { Link, useParams } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
+import ConfirmModal from '../components/ConfirmModal';
+import { useAuth } from '../hooks/useAuth';
+import { useLiveSync } from '../hooks/useLiveSync';
 import { getStorageUrl } from '../utils/imageUrl';
+import {
+  accountActionConfirm,
+  accountStatusBadge,
+  accountStatusLabels,
+  accountStatusOf,
+} from '../utils/accountStatus';
+
+const accountActionPaths = {
+  suspend: 'suspend',
+  unsuspend: 'unsuspend',
+  deactivate: 'toggle-status',
+  activate: 'toggle-status',
+};
 
 export default function UserDetailPage() {
   const { id } = useParams();
+  const { user: currentUser } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [toggling, setToggling] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [pendingAction, setPendingAction] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const isSelf = String(currentUser?.id) === String(id);
+  const status = accountStatusOf(user);
+
+  useLiveSync(() => setReloadKey((k) => k + 1));
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -24,17 +48,21 @@ export default function UserDetailPage() {
       }
     };
     fetchUser();
-  }, [id]);
+  }, [id, reloadKey]);
 
-  const handleToggleStatus = async () => {
-    setToggling(true);
+  const runAccountAction = async () => {
+    setBusy(true);
+    setError('');
+    setSuccess('');
     try {
-      const response = await api.post(`/users/${id}/toggle-status`);
+      const response = await api.post(`/users/${id}/${accountActionPaths[pendingAction]}`);
       setUser(response.data.user);
+      setSuccess(response.data.message);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update user status.');
     } finally {
-      setToggling(false);
+      setBusy(false);
+      setPendingAction(null);
     }
   };
 
@@ -72,6 +100,15 @@ export default function UserDetailPage() {
     <AppShell title="User details" eyebrow="Management">
       <div className="max-w-3xl space-y-6">
         {error && <Alert>{error}</Alert>}
+        {success && <Alert type="success">{success}</Alert>}
+        {pendingAction && (
+          <ConfirmModal
+            {...accountActionConfirm(pendingAction, user)}
+            busy={busy}
+            onConfirm={runAccountAction}
+            onCancel={() => setPendingAction(null)}
+          />
+        )}
 
         {/* User header card */}
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -98,8 +135,8 @@ export default function UserDetailPage() {
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadge(user?.role)}`}>
                     {user?.role === 'administrator' ? 'Admin' : user?.role === 'teacher' ? 'Teacher' : 'Student'}
                   </span>
-                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user?.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                    {user?.is_active ? 'Active' : 'Inactive'}
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${accountStatusBadge[status]}`}>
+                    {accountStatusLabels[status]}
                   </span>
                 </div>
               </div>
@@ -119,18 +156,38 @@ export default function UserDetailPage() {
               >
                 Edit user
               </Link>
-              <button
-                type="button"
-                onClick={handleToggleStatus}
-                disabled={toggling}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  user?.is_active
-                    ? 'border border-rose-300 bg-white text-rose-700 hover:bg-rose-50'
-                    : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
-                }`}
-              >
-                {toggling ? '...' : user?.is_active ? 'Deactivate' : 'Activate'}
-              </button>
+              {/* The signed-in administrator cannot suspend or deactivate themself. */}
+              {!isSelf && status === 'active' && (
+                <button
+                  type="button"
+                  onClick={() => setPendingAction('suspend')}
+                  className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-50"
+                >
+                  Suspend
+                </button>
+              )}
+              {!isSelf && status === 'suspended' && (
+                <button
+                  type="button"
+                  onClick={() => setPendingAction('unsuspend')}
+                  className="rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                >
+                  Reactivate
+                </button>
+              )}
+              {!isSelf && (
+                <button
+                  type="button"
+                  onClick={() => setPendingAction(user?.is_active ? 'deactivate' : 'activate')}
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                    user?.is_active
+                      ? 'border border-rose-300 bg-white text-rose-700 hover:bg-rose-50'
+                      : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
+                  }`}
+                >
+                  {user?.is_active ? 'Deactivate' : 'Activate'}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -160,7 +217,10 @@ export default function UserDetailPage() {
             <div>
               <dt className="text-sm font-medium text-slate-500">Account status</dt>
               <dd className="mt-1 text-sm font-semibold text-slate-950">
-                {user?.is_active ? 'Active' : 'Inactive'}
+                {accountStatusLabels[status]}
+                {status === 'suspended' && user?.suspended_at && (
+                  <span className="font-normal text-slate-500"> since {new Date(user.suspended_at).toLocaleString()}</span>
+                )}
               </dd>
             </div>
             <div>

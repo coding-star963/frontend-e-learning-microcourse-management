@@ -4,11 +4,19 @@ import { useAuth } from '../hooks/useAuth';
 import Alert from '../components/Alert';
 import AuthLayout from '../components/AuthLayout';
 import PasswordInput from '../components/PasswordInput';
+import { GMAIL_ERROR, isGmail } from '../utils/email';
+
+// Why the last session ended (set by the API client when an account is suspended or deactivated).
+function takeAuthNotice() {
+  const notice = sessionStorage.getItem('auth_notice') || '';
+  sessionStorage.removeItem('auth_notice');
+  return notice;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(takeAuthNotice);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +24,10 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!isGmail(email)) {
+      setError(GMAIL_ERROR);
+      return;
+    }
     setLoading(true);
 
     try {
@@ -53,6 +65,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+          <p className="mt-1.5 text-xs text-slate-400">Only Gmail addresses (@gmail.com) can sign in.</p>
         </div>
 
         <div>

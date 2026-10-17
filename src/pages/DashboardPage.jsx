@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import { useAuth } from '../hooks/useAuth';
 import { dashboardService } from '../services/dashboardService';
+import { useLiveSync } from '../hooks/useLiveSync';
 import {
   CoursesIcon,
   EnrollmentsIcon,
@@ -33,10 +34,48 @@ const announcementBadge = {
   important: 'bg-rose-50 text-rose-700 ring-rose-600/20',
 };
 
+const accountStatusRows = [
+  { key: 'active', label: 'Active', dot: 'bg-emerald-500', text: 'text-emerald-700' },
+  { key: 'suspended', label: 'Suspended', dot: 'bg-amber-500', text: 'text-amber-700' },
+  { key: 'deactivated', label: 'Deactivated', dot: 'bg-rose-500', text: 'text-rose-700' },
+];
+
+function AccountStatsCard({ title, stats }) {
+  const total = stats?.total || 0;
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+      <div className="flex items-baseline justify-between">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{title}</p>
+        <p className="text-3xl font-black tracking-tight text-slate-900">{total}</p>
+      </div>
+      <div className="mt-4 flex h-2 overflow-hidden rounded-full bg-slate-100">
+        {total > 0 && accountStatusRows.map((row) => (
+          <div key={row.key} className={row.dot} style={{ width: `${(stats[row.key] / total) * 100}%` }} />
+        ))}
+      </div>
+      <dl className="mt-4 grid grid-cols-3 gap-3">
+        {accountStatusRows.map((row) => (
+          <div key={row.key} className="rounded-xl bg-slate-50 p-3">
+            <dt className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <span className={`h-2 w-2 rounded-full ${row.dot}`} />
+              {row.label}
+            </dt>
+            <dd className={`mt-1 text-xl font-black ${row.text}`}>{stats?.[row.key] ?? 0}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Account statuses, enrollments and progress update as soon as they change anywhere.
+  useLiveSync(() => setReloadKey((k) => k + 1));
 
   useEffect(() => {
     const loadData = async () => {
@@ -51,7 +90,7 @@ export default function DashboardPage() {
     };
 
     loadData();
-  }, []);
+  }, [reloadKey]);
 
   if (loading) {
     return (
@@ -283,6 +322,19 @@ export default function DashboardPage() {
                 {data.summary.total_lessons} Total lessons delivered
               </p>
             </div>
+          </section>
+        )}
+
+        {/* Account statistics by status (kept current by live sync) */}
+        {data.account_stats && (
+          <section className={`grid grid-cols-1 gap-5 ${isAdmin ? 'lg:grid-cols-2' : ''}`}>
+            <AccountStatsCard
+              title={isAdmin ? 'Student Accounts' : 'My Students’ Accounts'}
+              stats={data.account_stats.students}
+            />
+            {isAdmin && data.account_stats.teachers && (
+              <AccountStatsCard title="Teacher Accounts" stats={data.account_stats.teachers} />
+            )}
           </section>
         )}
 

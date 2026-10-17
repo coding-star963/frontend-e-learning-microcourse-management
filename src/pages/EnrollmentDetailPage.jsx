@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
+import ConfirmModal from '../components/ConfirmModal';
 import { enrollmentService } from '../services/enrollmentService';
+import { useLiveSync } from '../hooks/useLiveSync';
 import { getStorageUrl } from '../utils/imageUrl';
+import { enrollmentActionConfirm, enrollmentActionStatus } from '../utils/enrollmentActions';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -20,60 +23,78 @@ export default function EnrollmentDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [progressInput, setProgressInput] = useState('');
+  const [pendingAction, setPendingAction] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const silentRef = useRef(false);
+
+  // Progress the student makes in the mobile app shows up without a reload.
+  useLiveSync(() => {
+    silentRef.current = true;
+    setReloadKey((k) => k + 1);
+  });
 
   useEffect(() => {
+    const silent = silentRef.current;
+    silentRef.current = false;
+
     const fetchEnrollment = async () => {
       try {
         const response = await enrollmentService.getById(id);
         setEnrollment(response.data.data);
-        setProgressInput(String(response.data.data.progress));
+        if (!silent) setProgressInput(String(response.data.data.progress));
       } catch {
-        setError('Failed to load enrollment.');
+        // A silent refresh after the record was deleted elsewhere shows "not found".
+        if (silent) setEnrollment(null);
+        else setError('Failed to load enrollment.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchEnrollment();
-  }, [id]);
+  }, [id, reloadKey]);
 
-  const handleAction = async (action) => {
+  // Runs the action the user confirmed in the modal.
+  const runAction = async () => {
+    const action = pendingAction;
     setError('');
     setSuccess('');
+    setBusy(true);
     try {
       if (action === 'delete') {
-        if (!window.confirm('Delete this enrollment record?')) return;
         await enrollmentService.delete(id);
         navigate('/enrollments');
         return;
       }
 
-      let status;
-      switch (action) {
-        case 'complete': status = 'completed'; break;
-        case 'cancel': status = 'cancelled'; break;
-        case 'suspend': status = 'suspended'; break;
-        case 'activate': status = 'active'; break;
+      if (action === 'progress') {
+        const response = await enrollmentService.update(id, { progress: parseFloat(progressInput) });
+        setSuccess('Progress updated successfully.');
+        setEnrollment(response.data.enrollment);
+        return;
       }
 
-      const response = await enrollmentService.update(id, { status });
+      const response = await enrollmentService.update(id, { status: enrollmentActionStatus[action] });
       setSuccess(response.data.message);
       setEnrollment(response.data.enrollment);
     } catch (err) {
       setError(err.response?.data?.message || `Failed to ${action} enrollment.`);
+    } finally {
+      setBusy(false);
+      setPendingAction(null);
     }
   };
 
-  const handleProgressUpdate = async () => {
-    setError('');
-    setSuccess('');
-    try {
-      const response = await enrollmentService.update(id, { progress: parseFloat(progressInput) });
-      setSuccess('Progress updated successfully.');
-      setEnrollment(response.data.enrollment);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update progress.');
+  const handleAction = (action) => setPendingAction(action);
+
+  const handleProgressUpdate = () => {
+    const value = parseFloat(progressInput);
+    if (Number.isNaN(value) || value < 0 || value > 100) {
+      setError('Progress must be a number from 0 to 100.');
+      return;
     }
+    setPendingAction('progress');
   };
 
   if (loading) {
@@ -87,7 +108,12 @@ export default function EnrollmentDetailPage() {
   if (!enrollment) {
     return (
       <AppShell title="Enrollment Details" eyebrow="Enrollment Management">
-        <Alert type="error">Enrollment not found.</Alert>
+        <Alert type="error">Enrollment not found. It may have been deleted.</Alert>
+        <div className="mt-4">
+          <Link to="/enrollments" className="text-sm text-slate-600 hover:text-teal-600">
+            &larr; Back to enrollments
+          </Link>
+        </div>
       </AppShell>
     );
   }
@@ -95,6 +121,14 @@ export default function EnrollmentDetailPage() {
   return (
     <AppShell title="Enrollment Details" eyebrow="Enrollment Management">
       <div className="mx-auto max-w-3xl space-y-6">
+        {pendingAction && (
+          <ConfirmModal
+            {...enrollmentActionConfirm(pendingAction, enrollment, { progress: parseFloat(progressInput) })}
+            busy={busy}
+            onConfirm={runAction}
+            onCancel={() => setPendingAction(null)}
+          />
+        )}
         <div className="flex items-center justify-between">
           <Link to="/enrollments" className="text-sm text-slate-600 hover:text-teal-600">
             &larr; Back to enrollments

@@ -3,6 +3,7 @@ import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
 import { useAuth } from '../hooks/useAuth';
 import { getStorageUrl } from '../utils/imageUrl';
+import { GMAIL_ERROR, isGmail } from '../utils/email';
 
 const inputClass =
   'mt-2 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20';
@@ -29,6 +30,11 @@ export default function ProfilePage() {
     e.preventDefault();
     setProfileError('');
     setProfileMessage('');
+    // Only Gmail addresses can sign in, so a changed email must be Gmail.
+    if (email.trim().toLowerCase() !== (user?.email || '').toLowerCase() && !isGmail(email)) {
+      setProfileError(GMAIL_ERROR);
+      return;
+    }
     setLoading(true);
 
     try {

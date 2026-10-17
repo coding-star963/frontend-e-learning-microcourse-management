@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { teacherService } from '../services/teacherService';
 import { useDebounce } from '../hooks/useDebounce';
+import { useLiveSync } from '../hooks/useLiveSync';
+import { accountStatusBadge, accountStatusLabels, accountStatusOf } from '../utils/accountStatus';
 import { PlusIcon, SearchIcon, TeachersIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
 
@@ -12,13 +14,22 @@ export default function TeacherListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const silentRef = useRef(false);
   const debouncedSearch = useDebounce(search, 300);
+
+  useLiveSync(() => {
+    silentRef.current = true;
+    setReloadKey((k) => k + 1);
+  });
 
   useEffect(() => {
     let ignore = false;
+    const silent = silentRef.current;
+    silentRef.current = false;
 
     const loadTeachers = async () => {
-      setLoading(true);
+      if (!silent) setLoading(true);
       try {
         const params = {};
         if (debouncedSearch) params.search = debouncedSearch;
@@ -36,7 +47,7 @@ export default function TeacherListPage() {
     return () => {
       ignore = true;
     };
-  }, [debouncedSearch]);
+  }, [debouncedSearch, reloadKey]);
 
   return (
     <AppShell title="Teacher Management" eyebrow="Administration">
@@ -129,12 +140,10 @@ export default function TeacherListPage() {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
-                            teacher.is_active
-                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-                              : 'bg-slate-100 text-slate-600 ring-slate-400/20'
+                            accountStatusBadge[accountStatusOf(teacher)]
                           }`}
                         >
-                          {teacher.is_active ? 'Active' : 'Inactive'}
+                          {accountStatusLabels[accountStatusOf(teacher)]}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs font-medium text-slate-400">

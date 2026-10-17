@@ -1,11 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
+import ConfirmModal from '../components/ConfirmModal';
+import api from '../services/api';
 import { enrollmentService } from '../services/enrollmentService';
 import { progressService } from '../services/progressService';
 import { useAuth } from '../hooks/useAuth';
+import { useLiveSync } from '../hooks/useLiveSync';
 import { getStorageUrl } from '../utils/imageUrl';
+import {
+  accountActionConfirm,
+  accountStatusBadge,
+  accountStatusLabels,
+  accountStatusOf,
+} from '../utils/accountStatus';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -24,10 +33,41 @@ export default function StudentEnrollmentsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
+  const [success, setSuccess] = useState('');
+  const [pendingAction, setPendingAction] = useState(null); // 'suspend' | 'unsuspend'
+  const [busy, setBusy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const silentRef = useRef(false);
+  const accountStatus = accountStatusOf(student);
+
+  useLiveSync(() => {
+    silentRef.current = true;
+    setReloadKey((k) => k + 1);
+  });
+
+  // Teachers and administrators can suspend a student's account (mobile access) from here.
+  const runAccountAction = async () => {
+    setBusy(true);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await api.post(`/users/${id}/${pendingAction}`);
+      setStudent((prev) => ({ ...prev, account_status: response.data.user.account_status }));
+      setSuccess(response.data.message);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update the account.');
+    } finally {
+      setBusy(false);
+      setPendingAction(null);
+    }
+  };
 
   useEffect(() => {
+    const silent = silentRef.current;
+    silentRef.current = false;
+
     const loadData = async () => {
-      setLoading(true);
+      if (!silent) setLoading(true);
       try {
         const params = { page, per_page: 15 };
         if (statusFilter) params.status = statusFilter;
@@ -42,14 +82,14 @@ export default function StudentEnrollmentsPage() {
         setEnrollments(enrollmentsRes.data.data);
         setPagination(enrollmentsRes.data.meta);
       } catch {
-        setError('Failed to load student data.');
+        if (!silent) setError('Failed to load student data.');
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [id, statusFilter, page]);
+  }, [id, statusFilter, page, reloadKey]);
 
   if (loading && !student) {
     return (
@@ -66,6 +106,15 @@ export default function StudentEnrollmentsPage() {
     <AppShell title={student ? `Enrollments - ${student.name}` : 'Student Enrollments'} eyebrow="Enrollment Management">
       <div className="space-y-6">
         {error && <Alert type="error">{error}</Alert>}
+        {success && <Alert type="success">{success}</Alert>}
+        {pendingAction && (
+          <ConfirmModal
+            {...accountActionConfirm(pendingAction, { ...student, role: 'student' })}
+            busy={busy}
+            onConfirm={runAccountAction}
+            onCancel={() => setPendingAction(null)}
+          />
+        )}
 
         <div>
           <Link to={isAdmin ? '/users' : '/enrollments'} className="text-sm text-slate-600 hover:text-teal-600">
@@ -75,7 +124,7 @@ export default function StudentEnrollmentsPage() {
 
         {student && (
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               {student.profile_photo ? (
                 <img
                   src={getStorageUrl(student.profile_photo)}
@@ -90,10 +139,31 @@ export default function StudentEnrollmentsPage() {
                   {student.name?.charAt(0).toUpperCase()}
                 </div>
               )}
-              <div>
+              <div className="min-w-0 flex-1">
                 <h2 className="text-xl font-bold text-slate-900">{student.name}</h2>
                 <p className="text-sm text-slate-500">{student.email}</p>
+                <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${accountStatusBadge[accountStatus]}`}>
+                  Account {accountStatusLabels[accountStatus].toLowerCase()}
+                </span>
               </div>
+              {accountStatus === 'active' && (
+                <button
+                  type="button"
+                  onClick={() => setPendingAction('suspend')}
+                  className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-50"
+                >
+                  Suspend account
+                </button>
+              )}
+              {accountStatus === 'suspended' && (
+                <button
+                  type="button"
+                  onClick={() => setPendingAction('unsuspend')}
+                  className="rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                >
+                  Reactivate account
+                </button>
+              )}
             </div>
           </div>
         )}

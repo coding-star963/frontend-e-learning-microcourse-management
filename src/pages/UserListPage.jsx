@@ -3,9 +3,27 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
+import ConfirmModal from '../components/ConfirmModal';
 import { useDebounce } from '../hooks/useDebounce';
+import { useAuth } from '../hooks/useAuth';
+import { useLiveSync } from '../hooks/useLiveSync';
 import { PlusIcon, SearchIcon, UsersIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
+import {
+  accountActionConfirm,
+  accountStatusBadge,
+  accountStatusDot,
+  accountStatusLabels,
+  accountStatusOf,
+} from '../utils/accountStatus';
+
+// Account actions: [request path suffix, success message].
+const accountActions = {
+  suspend: ['suspend', 'Account suspended.'],
+  unsuspend: ['unsuspend', 'Account reactivated.'],
+  deactivate: ['toggle-status', 'Account deactivated.'],
+  activate: ['toggle-status', 'Account activated.'],
+};
 
 const roleStyles = {
   administrator: 'bg-purple-50 text-purple-700 ring-purple-600/20',
@@ -26,22 +44,38 @@ export default function UserListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
-  const [togglingId, setTogglingId] = useState(null);
+  const [success, setSuccess] = useState('');
+  const [pending, setPending] = useState(null); // { action, user } awaiting confirmation
+  const [busy, setBusy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const silentRef = useRef(false);
   const abortRef = useRef(null);
   const debouncedSearch = useDebounce(search);
+  const { user: currentUser } = useAuth();
 
+  // Account changes made elsewhere (e.g. a teacher suspends a student) show up without a reload.
+  useLiveSync(() => {
+    silentRef.current = true;
+    setReloadKey((k) => k + 1);
+  });
 
   useEffect(() => {
     const controller = new AbortController();
     abortRef.current = controller;
+    const silent = silentRef.current;
+    silentRef.current = false;
 
     const loadUsers = async () => {
-      setLoading(true);
-      setError('');
+      if (!silent) {
+        setLoading(true);
+        setError('');
+      }
       try {
         const params = { page, per_page: 15 };
         if (roleFilter) params.role = roleFilter;
+        if (statusFilter) params.status = statusFilter;
         if (debouncedSearch) params.search = debouncedSearch;
         const response = await api.get('/users', { params, signal: controller.signal });
         if (!controller.signal.aborted) {
@@ -49,7 +83,7 @@ export default function UserListPage() {
           setPagination(response.data.meta);
         }
       } catch (err) {
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && !silent) {
           setError(err.response?.data?.message || 'Failed to load users.');
         }
       } finally {
@@ -62,27 +96,39 @@ export default function UserListPage() {
     loadUsers();
 
     return () => controller.abort();
-  }, [roleFilter, debouncedSearch, page]);
+  }, [roleFilter, statusFilter, debouncedSearch, page, reloadKey]);
 
-  const handleToggleStatus = async (userId) => {
-    setTogglingId(userId);
+  const runAccountAction = async () => {
+    const { action, user } = pending;
+    const [path, message] = accountActions[action];
+    setBusy(true);
+    setError('');
+    setSuccess('');
     try {
-      const response = await api.post(`/users/${userId}/toggle-status`);
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? response.data.user : u))
-      );
+      const response = await api.post(`/users/${user.id}/${path}`);
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? response.data.user : u)));
+      setSuccess(response.data.message || message);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update user status.');
+      setError(err.response?.data?.message || 'Failed to update the account.');
     } finally {
-      setTogglingId(null);
+      setBusy(false);
+      setPending(null);
     }
   };
-
 
   return (
     <AppShell title="User Management" eyebrow="Administration">
       <div className="space-y-6 pb-12">
         {error && <Alert>{error}</Alert>}
+        {success && <Alert type="success">{success}</Alert>}
+        {pending && (
+          <ConfirmModal
+            {...accountActionConfirm(pending.action, pending.user)}
+            busy={busy}
+            onConfirm={runAccountAction}
+            onCancel={() => setPending(null)}
+          />
+        )}
 
         {/* Header with actions */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -102,7 +148,7 @@ export default function UserListPage() {
 
         {/* Filter & Search Bar */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_220px]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_200px_200px]">
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                 <SearchIcon className="h-4 w-4" />
@@ -133,6 +179,22 @@ export default function UserListPage() {
                 <option value="administrator">Admin</option>
                 <option value="teacher">Teachers & Instructors</option>
                 <option value="student">Students (Mobile)</option>
+              </select>
+            </div>
+            <div>
+              <select
+                id="status-filter"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
+              >
+                <option value="">All Account Statuses</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="deactivated">Deactivated</option>
               </select>
             </div>
           </div>
@@ -221,17 +283,11 @@ export default function UserListPage() {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
-                            user.is_active
-                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-                              : 'bg-rose-50 text-rose-700 ring-rose-600/20'
+                            accountStatusBadge[accountStatusOf(user)]
                           }`}
                         >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                              user.is_active ? 'bg-emerald-500' : 'bg-rose-500'
-                            }`}
-                          />
-                          {user.is_active ? 'Active' : 'Disabled'}
+                          <span className={`h-1.5 w-1.5 rounded-full ${accountStatusDot[accountStatusOf(user)]}`} />
+                          {accountStatusLabels[accountStatusOf(user)]}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs font-medium text-slate-400">
@@ -251,18 +307,42 @@ export default function UserListPage() {
                           >
                             Edit
                           </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(user.id)}
-                            disabled={togglingId === user.id}
-                            className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition disabled:opacity-50 ${
-                              user.is_active
-                                ? 'text-amber-700 hover:bg-amber-50'
-                                : 'text-emerald-700 hover:bg-emerald-50'
-                            }`}
-                          >
-                            {togglingId === user.id ? 'Updating...' : user.is_active ? 'Deactivate' : 'Activate'}
-                          </button>
+                          {user.id === currentUser?.id ? (
+                            // The signed-in administrator cannot suspend or deactivate themself.
+                            <span className="px-2.5 py-1.5 text-xs font-semibold text-slate-400">You</span>
+                          ) : (
+                            <>
+                              {accountStatusOf(user) === 'active' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPending({ action: 'suspend', user })}
+                                  className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-50"
+                                >
+                                  Suspend
+                                </button>
+                              )}
+                              {accountStatusOf(user) === 'suspended' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPending({ action: 'unsuspend', user })}
+                                  className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50"
+                                >
+                                  Reactivate
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setPending({ action: user.is_active ? 'deactivate' : 'activate', user })}
+                                className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition ${
+                                  user.is_active
+                                    ? 'text-rose-700 hover:bg-rose-50'
+                                    : 'text-emerald-700 hover:bg-emerald-50'
+                                }`}
+                              >
+                                {user.is_active ? 'Deactivate' : 'Activate'}
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { categoryService } from '../services/courseService';
@@ -274,8 +275,17 @@ export default function CategoryListPage() {
                       </div>
                     </div>
                   </div>
-                  {isAdmin && (
                   <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                    {(category.courses_count ?? 0) > 0 && (
+                      <Link
+                        to={`/courses?category_id=${category.id}`}
+                        className="rounded-lg px-3 py-1.5 text-xs font-bold text-teal-700 hover:bg-teal-50 transition"
+                      >
+                        View courses
+                      </Link>
+                    )}
+                  {isAdmin && (
+                  <>
                     <button
                       onClick={() => handleEdit(category)}
                       className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
@@ -288,8 +298,9 @@ export default function CategoryListPage() {
                     >
                       Delete
                     </button>
-                  </div>
+                  </>
                   )}
+                  </div>
                 </div>
               ))}
             </div>

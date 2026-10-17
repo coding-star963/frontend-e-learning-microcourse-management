@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
+import ConfirmModal from '../components/ConfirmModal';
 import PasswordInput from '../components/PasswordInput';
 import { enrollmentService } from '../services/enrollmentService';
 import { courseService } from '../services/courseService';
 import { useDebounce } from '../hooks/useDebounce';
+import { useLiveSync } from '../hooks/useLiveSync';
 import { PlusIcon, SearchIcon, EnrollmentsIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
 import { GMAIL_ERROR, isGmail } from '../utils/email';
+import { accountStatusBadge, accountStatusLabels, accountStatusOf } from '../utils/accountStatus';
+import { enrollmentActionConfirm, enrollmentActionStatus } from '../utils/enrollmentActions';
 
 const statusBadge = {
   active: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -35,12 +39,26 @@ export default function EnrollmentListPage() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [pending, setPending] = useState(null); // { action, enrollment } awaiting confirmation
+  const [busy, setBusy] = useState(false);
+  const silentRef = useRef(false);
   const debouncedSearch = useDebounce(search);
   const enrolledStudents = students.filter((s) => s.enrollments_count > 0);
+  // Suspended accounts cannot be enrolled until they are reactivated.
+  const enrollableStudents = students.filter((s) => accountStatusOf(s) === 'active');
+
+  // Self-enrollments and progress from the mobile app appear without a reload.
+  useLiveSync(() => {
+    silentRef.current = true;
+    setReloadKey((k) => k + 1);
+  });
 
   useEffect(() => {
+    const silent = silentRef.current;
+    silentRef.current = false;
+
     const loadData = async () => {
-      setLoading(true);
+      if (!silent) setLoading(true);
       try {
         const params = { per_page: 15, page };
         if (statusFilter) params.status = statusFilter;
@@ -59,7 +77,7 @@ export default function EnrollmentListPage() {
         setCourses(coursesRes.data.data);
         setStudents(studentsRes.data.data);
       } catch {
-        setError('Failed to load enrollment data.');
+        if (!silent) setError('Failed to load enrollment data.');
       } finally {
         setLoading(false);
       }
@@ -101,39 +119,44 @@ export default function EnrollmentListPage() {
     }
   };
 
-  const handleAction = async (action, id) => {
+  // Runs the action the user confirmed in the modal.
+  const runAction = async () => {
+    const { action, enrollment } = pending;
     setError('');
     setSuccess('');
+    setBusy(true);
     try {
       if (action === 'delete') {
-        if (!window.confirm('Delete this enrollment record?')) return;
-        await enrollmentService.delete(id);
+        await enrollmentService.delete(enrollment.id);
         setSuccess('Enrollment deleted successfully.');
-        setEnrollments((prev) => prev.filter((e) => e.id !== id));
-        return;
+      } else {
+        const response = await enrollmentService.update(enrollment.id, { status: enrollmentActionStatus[action] });
+        setSuccess(response.data.message);
       }
-
-      let status;
-      switch (action) {
-        case 'complete': status = 'completed'; break;
-        case 'cancel': status = 'cancelled'; break;
-        case 'suspend': status = 'suspended'; break;
-        case 'activate': status = 'active'; break;
-      }
-
-      const response = await enrollmentService.update(id, { status });
-      setSuccess(response.data.message);
       setReloadKey((k) => k + 1);
     } catch (err) {
       setError(err.response?.data?.message || `Failed to ${action} enrollment.`);
+    } finally {
+      setBusy(false);
+      setPending(null);
     }
   };
+
+  const handleAction = (action, enrollment) => setPending({ action, enrollment });
 
   return (
     <AppShell title="Student Enrollments" eyebrow="Academics">
       <div className="space-y-6 pb-12">
         {error && <Alert type="error">{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
+        {pending && (
+          <ConfirmModal
+            {...enrollmentActionConfirm(pending.action, pending.enrollment)}
+            busy={busy}
+            onConfirm={runAction}
+            onCancel={() => setPending(null)}
+          />
+        )}
 
         {/* Stats Strip */}
         {stats && (
@@ -220,12 +243,15 @@ export default function EnrollmentListPage() {
                       className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
                     >
                       <option value="">Select a student...</option>
-                      {students.map((s) => (
+                      {enrollableStudents.map((s) => (
                         <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
                       ))}
                     </select>
-                    {students.length === 0 && (
-                      <p className="mt-1 text-xs text-slate-500">No student accounts yet. Switch to "New Student" to register one.</p>
+                    {enrollableStudents.length === 0 && (
+                      <p className="mt-1 text-xs text-slate-500">No active student accounts yet. Switch to "New Student" to register one.</p>
+                    )}
+                    {students.length > enrollableStudents.length && (
+                      <p className="mt-1 text-xs text-slate-500">Suspended students are not listed; reactivate their account first.</p>
                     )}
                   </div>
                 ) : (
@@ -292,6 +318,14 @@ export default function EnrollmentListPage() {
                     ))}
                   </select>
                 </div>
+                <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                  <p className="font-bold text-slate-700">What happens when you confirm</p>
+                  <ul className="mt-1.5 list-disc space-y-1 pl-4">
+                    {addForm.mode === 'new' && <li>A new student account is created with this Gmail address and password.</li>}
+                    <li>The student gets an active enrollment and the course appears in "My Courses" in the mobile app.</li>
+                    <li>The student is notified in the mobile app right away.</li>
+                  </ul>
+                </div>
                 <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                   <button
                     type="button"
@@ -336,6 +370,11 @@ export default function EnrollmentListPage() {
                   </span>
                   {s.name}
                   <span className="text-slate-400">&middot; {s.enrollments_count} course{s.enrollments_count !== 1 ? 's' : ''}</span>
+                  {accountStatusOf(s) !== 'active' && (
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ring-1 ${accountStatusBadge[accountStatusOf(s)]}`}>
+                      {accountStatusLabels[accountStatusOf(s)]}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
@@ -423,6 +462,11 @@ export default function EnrollmentListPage() {
                           <div>
                             <p className="font-bold text-slate-900">{enrollment.user?.name}</p>
                             <p className="text-xs text-slate-500">{enrollment.user?.email}</p>
+                            {enrollment.user && accountStatusOf(enrollment.user) !== 'active' && (
+                              <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${accountStatusBadge[accountStatusOf(enrollment.user)]}`}>
+                                Account {accountStatusLabels[accountStatusOf(enrollment.user)].toLowerCase()}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -468,19 +512,19 @@ export default function EnrollmentListPage() {
                           {enrollment.status === 'active' && (
                             <>
                               <button
-                                onClick={() => handleAction('complete', enrollment.id)}
+                                onClick={() => handleAction('complete', enrollment)}
                                 className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50 transition"
                               >
                                 Complete
                               </button>
                               <button
-                                onClick={() => handleAction('suspend', enrollment.id)}
+                                onClick={() => handleAction('suspend', enrollment)}
                                 className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-600 hover:bg-amber-50 transition"
                               >
                                 Suspend
                               </button>
                               <button
-                                onClick={() => handleAction('cancel', enrollment.id)}
+                                onClick={() => handleAction('cancel', enrollment)}
                                 className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition"
                               >
                                 Cancel
@@ -489,14 +533,14 @@ export default function EnrollmentListPage() {
                           )}
                           {(enrollment.status === 'cancelled' || enrollment.status === 'suspended') && (
                             <button
-                              onClick={() => handleAction('activate', enrollment.id)}
+                              onClick={() => handleAction('activate', enrollment)}
                               className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition"
                             >
                               Reactivate
                             </button>
                           )}
                           <button
-                            onClick={() => handleAction('delete', enrollment.id)}
+                            onClick={() => handleAction('delete', enrollment)}
                             className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition"
                           >
                             Delete

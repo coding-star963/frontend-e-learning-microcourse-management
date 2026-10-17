@@ -4,6 +4,7 @@ import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
 import { GMAIL_ERROR, isGmail } from '../utils/email';
+import { useAuth } from '../hooks/useAuth';
 
 const inputClass =
   'mt-2 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100';
@@ -11,6 +12,9 @@ const inputClass =
 export default function UserEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  // The signed-in administrator cannot change their own role.
+  const isSelf = String(currentUser?.id) === String(id);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [originalEmail, setOriginalEmail] = useState('');
@@ -40,16 +44,16 @@ export default function UserEditPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    // Older non-Gmail student emails may stay; a changed one must be Gmail.
+    // An older non-Gmail email may stay; a changed one must be Gmail.
     const changesEmail = email.trim().toLowerCase() !== originalEmail.toLowerCase();
-    if (role === 'student' && changesEmail && !isGmail(email)) {
+    if (changesEmail && !isGmail(email)) {
       setError(GMAIL_ERROR);
       return;
     }
     setSaving(true);
 
     try {
-      await api.put(`/users/${id}`, { name, email, role });
+      await api.put(`/users/${id}`, isSelf ? { name, email } : { name, email, role });
       navigate(`/users/${id}`);
     } catch (err) {
       if (err.response?.status === 422) {
@@ -112,9 +116,7 @@ export default function UserEditPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className={inputClass}
               />
-              {role === 'student' && (
-                <p className="mt-1 text-xs text-slate-500">Student accounts must use a Gmail address (@gmail.com).</p>
-              )}
+              <p className="mt-1 text-xs text-slate-500">Every account must use a Gmail address (@gmail.com).</p>
             </div>
 
             <div>
@@ -125,12 +127,16 @@ export default function UserEditPage() {
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className={inputClass}
+                disabled={isSelf}
+                className={`${inputClass} disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500`}
               >
                 <option value="administrator">Administrator</option>
                 <option value="teacher">Teacher</option>
                 <option value="student">Student</option>
               </select>
+              {isSelf && (
+                <p className="mt-1 text-xs text-slate-500">You cannot change your own role.</p>
+              )}
             </div>
 
             <div className="flex items-center gap-3 pt-2">

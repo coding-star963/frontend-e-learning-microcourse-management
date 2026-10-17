@@ -6,6 +6,7 @@ import { progressService } from '../services/progressService';
 import { useDebounce } from '../hooks/useDebounce';
 import { SearchIcon, ProgressIcon, UsersIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
+import { accountStatusBadge, accountStatusDot, accountStatusLabels, accountStatusOf } from '../utils/accountStatus';
 
 export default function StudentProgressPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -221,17 +222,11 @@ export default function StudentProgressPage() {
                       <div className="mt-4 flex items-center justify-between border-t border-slate-100/80 pt-3">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                            student.is_active
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-rose-50 text-rose-700'
+                            accountStatusBadge[accountStatusOf(student)]
                           }`}
                         >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                              student.is_active ? 'bg-emerald-500' : 'bg-rose-500'
-                            }`}
-                          />
-                          {student.is_active ? 'Active' : 'Disabled'}
+                          <span className={`h-1.5 w-1.5 rounded-full ${accountStatusDot[accountStatusOf(student)]}`} />
+                          {accountStatusLabels[accountStatusOf(student)]}
                         </span>
 
                         <span

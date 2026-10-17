@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
+import ConfirmModal from '../components/ConfirmModal';
 import { enrollmentService } from '../services/enrollmentService';
 import { courseService } from '../services/courseService';
+import { useLiveSync } from '../hooks/useLiveSync';
+import { enrollmentActionConfirm, enrollmentActionStatus } from '../utils/enrollmentActions';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -24,10 +27,22 @@ export default function CourseEnrollmentsPage() {
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
+  const [pending, setPending] = useState(null); // { action, enrollment } awaiting confirmation
+  const [busy, setBusy] = useState(false);
+  const silentRef = useRef(false);
+
+  // Enrollment and progress changes from the mobile app appear without a reload.
+  useLiveSync(() => {
+    silentRef.current = true;
+    setReloadKey((k) => k + 1);
+  });
 
   useEffect(() => {
+    const silent = silentRef.current;
+    silentRef.current = false;
+
     const loadData = async () => {
-      setLoading(true);
+      if (!silent) setLoading(true);
       try {
         const params = { per_page: 15, page };
         if (statusFilter) params.status = statusFilter;
@@ -43,7 +58,7 @@ export default function CourseEnrollmentsPage() {
         setPagination(enrollmentsRes.data.meta);
         setStats(statsRes.data);
       } catch {
-        setError('Failed to load enrollment data.');
+        if (!silent) setError('Failed to load enrollment data.');
       } finally {
         setLoading(false);
       }
@@ -52,25 +67,26 @@ export default function CourseEnrollmentsPage() {
     loadData();
   }, [slug, statusFilter, reloadKey, page]);
 
-  const handleAction = async (action, id) => {
+  // Runs the action the user confirmed in the modal.
+  const runAction = async () => {
+    const { action, enrollment } = pending;
     setError('');
     setSuccess('');
+    setBusy(true);
     try {
-      let status;
-      switch (action) {
-        case 'complete': status = 'completed'; break;
-        case 'cancel': status = 'cancelled'; break;
-        case 'suspend': status = 'suspended'; break;
-        case 'activate': status = 'active'; break;
-      }
-
-      const response = await enrollmentService.update(id, { status });
+      const response = await enrollmentService.update(enrollment.id, { status: enrollmentActionStatus[action] });
       setSuccess(response.data.message);
       setReloadKey((k) => k + 1);
     } catch (err) {
       setError(err.response?.data?.message || `Failed to ${action} enrollment.`);
+    } finally {
+      setBusy(false);
+      setPending(null);
     }
   };
+
+  // This list's enrollments do not include their course, so add it for the confirmation text.
+  const handleAction = (action, enrollment) => setPending({ action, enrollment: { ...enrollment, course } });
 
   if (loading && !course) {
     return (
@@ -85,6 +101,14 @@ export default function CourseEnrollmentsPage() {
       <div className="space-y-6">
         {error && <Alert type="error">{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
+        {pending && (
+          <ConfirmModal
+            {...enrollmentActionConfirm(pending.action, pending.enrollment)}
+            busy={busy}
+            onConfirm={runAction}
+            onCancel={() => setPending(null)}
+          />
+        )}
 
         <div>
           <Link to={`/courses/${slug}`} className="text-sm text-slate-600 hover:text-teal-600">
@@ -177,7 +201,7 @@ export default function CourseEnrollmentsPage() {
                           </Link>
                           {enrollment.status === 'active' && (
                             <button
-                              onClick={() => handleAction('complete', enrollment.id)}
+                              onClick={() => handleAction('complete', enrollment)}
                               className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
                             >
                               Complete
@@ -185,7 +209,7 @@ export default function CourseEnrollmentsPage() {
                           )}
                           {(enrollment.status === 'cancelled' || enrollment.status === 'suspended') && (
                             <button
-                              onClick={() => handleAction('activate', enrollment.id)}
+                              onClick={() => handleAction('activate', enrollment)}
                               className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50"
                             >
                               Reactivate

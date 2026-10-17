@@ -25,7 +25,7 @@ export default function UserCreatePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (role === 'student' && !isGmail(email)) {
+    if (!isGmail(email)) {
       setError(GMAIL_ERROR);
       return;
     }
@@ -93,11 +93,9 @@ export default function UserCreatePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={inputClass}
-                placeholder={role === 'student' ? 'name@gmail.com' : 'you@example.com'}
+                placeholder="name@gmail.com"
               />
-              {role === 'student' && (
-                <p className="mt-1 text-xs text-slate-500">Student accounts must use a Gmail address (@gmail.com).</p>
-              )}
+              <p className="mt-1 text-xs text-slate-500">Every account must use a Gmail address (@gmail.com).</p>
             </div>
 
             <div>

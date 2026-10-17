@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { courseService, categoryService } from '../services/courseService';
@@ -26,7 +26,9 @@ export default function CourseListPage() {
   const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  // Opened from Categories → "View courses" with ?category_id=…
+  const [searchParams] = useSearchParams();
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category_id') || '');
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
   const [actionLoading, setActionLoading] = useState(null);

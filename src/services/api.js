@@ -23,7 +23,13 @@ api.interceptors.response.use(
     if (error.response?.status === 413) {
       error.response.data = { message: 'The file is too large to upload. Videos and files can be up to 100MB, images up to 10MB.' };
     }
-    if (error.response?.status === 401) {
+    // A suspended or deactivated account is signed out; the login page shows why.
+    const accountStatus = error.response?.data?.account_status;
+    const accountBlocked = accountStatus === 'suspended' || accountStatus === 'deactivated';
+    if (accountBlocked) {
+      sessionStorage.setItem('auth_notice', error.response.data.message);
+    }
+    if (error.response?.status === 401 || accountBlocked) {
       localStorage.removeItem('token');
       // Only redirect to login if not already on public auth pages
       if (window.location.pathname !== '/login' && 

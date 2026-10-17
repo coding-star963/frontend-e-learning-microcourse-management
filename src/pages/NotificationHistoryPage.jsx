@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { announcementService } from '../services/announcementService';
@@ -51,6 +52,12 @@ export default function NotificationHistoryPage() {
     <AppShell title="Notification History" eyebrow="Announcement Management">
       <div className="space-y-6">
         {error && <Alert type="error">{error}</Alert>}
+
+        <div>
+          <Link to="/announcements" className="text-sm text-slate-600 hover:text-teal-600">
+            &larr; Back to announcements
+          </Link>
+        </div>
 
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
