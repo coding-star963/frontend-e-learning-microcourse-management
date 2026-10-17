@@ -12,6 +12,7 @@ import {
   accountStatusBadge,
   accountStatusLabels,
   accountStatusOf,
+  FROZEN_HINT,
 } from '../utils/accountStatus';
 
 const accountActionPaths = {
@@ -101,6 +102,7 @@ export default function UserDetailPage() {
       <div className="max-w-3xl space-y-6">
         {error && <Alert>{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
+        {status === 'deactivated' && <Alert>{FROZEN_HINT}</Alert>}
         {pendingAction && (
           <ConfirmModal
             {...accountActionConfirm(pendingAction, user)}
@@ -150,12 +152,14 @@ export default function UserDetailPage() {
                   View Progress Telemetry
                 </Link>
               )}
-              <Link
-                to={`/users/${id}/edit`}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-              >
-                Edit user
-              </Link>
+              {status !== 'deactivated' && (
+                <Link
+                  to={`/users/${id}/edit`}
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Edit user
+                </Link>
+              )}
               {/* The signed-in administrator cannot suspend or deactivate themself. */}
               {!isSelf && status === 'active' && (
                 <button

@@ -107,6 +107,9 @@ export default function StudentEnrollmentsPage() {
       <div className="space-y-6">
         {error && <Alert type="error">{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
+        {accountStatus === 'deactivated' && (
+          <Alert type="error">This student&apos;s account is deactivated, so their enrollments and progress are frozen until an administrator activates it.</Alert>
+        )}
         {pendingAction && (
           <ConfirmModal
             {...accountActionConfirm(pendingAction, { ...student, role: 'student' })}

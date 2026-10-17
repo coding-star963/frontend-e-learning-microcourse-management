@@ -17,6 +17,13 @@ export const accountStatusDot = {
   deactivated: 'bg-rose-500',
 };
 
+// A deactivated account's records are frozen until it is activated again.
+export const FROZEN_HINT = 'Deactivated accounts are read-only. Activate the account to make changes.';
+
+export function isFrozen(user) {
+  return accountStatusOf(user) === 'deactivated';
+}
+
 export function accountStatusOf(user) {
   if (user?.account_status) return user.account_status;
   return user?.is_active === false ? 'deactivated' : 'active';
@@ -36,7 +43,7 @@ export function accountActionConfirm(action, user) {
             ? 'They are signed out of the mobile app right away and see a suspension notice.'
             : 'They are signed out of the web portal right away and see a suspension notice.',
           'Sign-in attempts are refused until the account is reactivated.',
-          'Enrollments, progress and other records are kept unchanged.',
+          'Their records stay editable: enrollments, progress and account details keep updating.',
         ],
         confirmLabel: 'Suspend account',
         tone: 'warning',
@@ -58,7 +65,8 @@ export function accountActionConfirm(action, user) {
         consequences: [
           'They are signed out on every device immediately.',
           'Sign-in attempts are refused.',
-          'Their records are kept.',
+          'Their records are frozen: the account cannot be edited, and enrollments and progress are no longer updated.',
+          'Updates resume when the account is activated again.',
         ],
         confirmLabel: 'Deactivate',
         tone: 'danger',
@@ -67,7 +75,10 @@ export function accountActionConfirm(action, user) {
       return {
         title: `Activate ${name}'s account?`,
         description: 'The account becomes active and can sign in again.',
-        consequences: ['Any suspension on the account is also lifted.'],
+        consequences: [
+          'Any suspension on the account is also lifted.',
+          'Its records can be edited again; a student\'s progress is brought up to date.',
+        ],
         confirmLabel: 'Activate',
         tone: 'primary',
       };

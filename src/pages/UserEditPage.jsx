@@ -5,6 +5,7 @@ import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
 import { GMAIL_ERROR, isGmail } from '../utils/email';
 import { useAuth } from '../hooks/useAuth';
+import { FROZEN_HINT, isFrozen } from '../utils/accountStatus';
 
 const inputClass =
   'mt-2 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100';
@@ -22,6 +23,8 @@ export default function UserEditPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // A deactivated account must be activated before it can be edited.
+  const [frozen, setFrozen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -32,6 +35,7 @@ export default function UserEditPage() {
         setEmail(user.email);
         setOriginalEmail(user.email);
         setRole(user.role);
+        setFrozen(isFrozen(user));
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load user.');
       } finally {
@@ -89,6 +93,8 @@ export default function UserEditPage() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             {error && <Alert>{error}</Alert>}
+            {frozen && <Alert>{FROZEN_HINT}</Alert>}
+            <fieldset disabled={frozen} className="space-y-5 disabled:opacity-60">
 
             <div>
               <label htmlFor="name" className="block text-sm font-semibold text-slate-700">
@@ -139,10 +145,12 @@ export default function UserEditPage() {
               )}
             </div>
 
+            </fieldset>
+
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || frozen}
                 className="rounded-lg bg-teal-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? 'Saving...' : 'Save changes'}

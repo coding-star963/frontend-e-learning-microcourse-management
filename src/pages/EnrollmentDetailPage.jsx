@@ -7,6 +7,7 @@ import { enrollmentService } from '../services/enrollmentService';
 import { useLiveSync } from '../hooks/useLiveSync';
 import { getStorageUrl } from '../utils/imageUrl';
 import { enrollmentActionConfirm, enrollmentActionStatus } from '../utils/enrollmentActions';
+import { isFrozen } from '../utils/accountStatus';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -104,6 +105,9 @@ export default function EnrollmentDetailPage() {
       </AppShell>
     );
   }
+
+  // A deactivated student's records are frozen until the account is activated.
+  const frozen = isFrozen(enrollment?.user);
 
   if (!enrollment) {
     return (
@@ -217,7 +221,8 @@ export default function EnrollmentDetailPage() {
                   />
                   <button
                     onClick={handleProgressUpdate}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    disabled={frozen}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Update
                   </button>
@@ -252,6 +257,13 @@ export default function EnrollmentDetailPage() {
               </div>
             </div>
 
+            {frozen ? (
+              <div className="mt-6 border-t border-slate-200 pt-5">
+                <Alert type="error">
+                  {enrollment.user?.name}&apos;s account is deactivated, so this enrollment is read-only. Activate the account to make changes.
+                </Alert>
+              </div>
+            ) : (
             <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-5">
               {enrollment.status === 'active' && (
                 <>
@@ -290,6 +302,7 @@ export default function EnrollmentDetailPage() {
                 Delete Record
               </button>
             </div>
+            )}
           </div>
         </div>
       </div>

@@ -11,7 +11,7 @@ import { useLiveSync } from '../hooks/useLiveSync';
 import { PlusIcon, SearchIcon, EnrollmentsIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
 import { GMAIL_ERROR, isGmail } from '../utils/email';
-import { accountStatusBadge, accountStatusLabels, accountStatusOf } from '../utils/accountStatus';
+import { accountStatusBadge, accountStatusLabels, accountStatusOf, FROZEN_HINT, isFrozen } from '../utils/accountStatus';
 import { enrollmentActionConfirm, enrollmentActionStatus } from '../utils/enrollmentActions';
 
 const statusBadge = {
@@ -44,8 +44,8 @@ export default function EnrollmentListPage() {
   const silentRef = useRef(false);
   const debouncedSearch = useDebounce(search);
   const enrolledStudents = students.filter((s) => s.enrollments_count > 0);
-  // Suspended accounts cannot be enrolled until they are reactivated.
-  const enrollableStudents = students.filter((s) => accountStatusOf(s) === 'active');
+  // Suspended students can still be enrolled; deactivated accounts are frozen (and not listed).
+  const enrollableStudents = students.filter((s) => !isFrozen(s));
 
   // Self-enrollments and progress from the mobile app appear without a reload.
   useLiveSync(() => {
@@ -244,15 +244,15 @@ export default function EnrollmentListPage() {
                     >
                       <option value="">Select a student...</option>
                       {enrollableStudents.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.email}){accountStatusOf(s) === 'suspended' ? ' — suspended' : ''}
+                        </option>
                       ))}
                     </select>
                     {enrollableStudents.length === 0 && (
-                      <p className="mt-1 text-xs text-slate-500">No active student accounts yet. Switch to "New Student" to register one.</p>
+                      <p className="mt-1 text-xs text-slate-500">No student accounts yet. Switch to "New Student" to register one.</p>
                     )}
-                    {students.length > enrollableStudents.length && (
-                      <p className="mt-1 text-xs text-slate-500">Suspended students are not listed; reactivate their account first.</p>
-                    )}
+                    <p className="mt-1 text-xs text-slate-500">Deactivated students are not listed: their records are frozen until the account is activated.</p>
                   </div>
                 ) : (
                   <>
@@ -509,6 +509,13 @@ export default function EnrollmentListPage() {
                           >
                             View
                           </Link>
+                          {enrollment.user && isFrozen(enrollment.user) ? (
+                            // A deactivated student's records are frozen until the account is activated.
+                            <span title={FROZEN_HINT} className="px-2.5 py-1.5 text-xs font-semibold text-slate-400">
+                              Read-only
+                            </span>
+                          ) : (
+                          <>
                           {enrollment.status === 'active' && (
                             <>
                               <button
@@ -545,6 +552,8 @@ export default function EnrollmentListPage() {
                           >
                             Delete
                           </button>
+                          </>
+                          )}
                         </div>
                       </td>
                     </tr>

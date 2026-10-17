@@ -7,6 +7,7 @@ import { enrollmentService } from '../services/enrollmentService';
 import { courseService } from '../services/courseService';
 import { useLiveSync } from '../hooks/useLiveSync';
 import { enrollmentActionConfirm, enrollmentActionStatus } from '../utils/enrollmentActions';
+import { FROZEN_HINT, isFrozen } from '../utils/accountStatus';
 
 const statusColors = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -199,6 +200,13 @@ export default function CourseEnrollmentsPage() {
                           >
                             View
                           </Link>
+                          {isFrozen(enrollment.user) ? (
+                            // A deactivated student's records are frozen until the account is activated.
+                            <span title={FROZEN_HINT} className="px-2.5 py-1.5 text-xs font-medium text-slate-400">
+                              Read-only
+                            </span>
+                          ) : (
+                          <>
                           {enrollment.status === 'active' && (
                             <button
                               onClick={() => handleAction('complete', enrollment)}
@@ -214,6 +222,8 @@ export default function CourseEnrollmentsPage() {
                             >
                               Reactivate
                             </button>
+                          )}
+                          </>
                           )}
                         </div>
                       </td>

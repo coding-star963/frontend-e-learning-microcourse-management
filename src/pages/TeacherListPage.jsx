@@ -5,7 +5,7 @@ import Alert from '../components/Alert';
 import { teacherService } from '../services/teacherService';
 import { useDebounce } from '../hooks/useDebounce';
 import { useLiveSync } from '../hooks/useLiveSync';
-import { accountStatusBadge, accountStatusLabels, accountStatusOf } from '../utils/accountStatus';
+import { accountStatusBadge, accountStatusLabels, accountStatusOf, FROZEN_HINT, isFrozen } from '../utils/accountStatus';
 import { PlusIcon, SearchIcon, TeachersIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
 
@@ -157,12 +157,19 @@ export default function TeacherListPage() {
                           >
                             View
                           </Link>
-                          <Link
-                            to={`/users/${teacher.id}/edit`}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-teal-600 hover:bg-teal-50 transition"
-                          >
-                            Edit
-                          </Link>
+                          {isFrozen(teacher) ? (
+                            // A deactivated teacher must be activated before their record can be edited.
+                            <span title={FROZEN_HINT} className="cursor-not-allowed rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-300">
+                              Edit
+                            </span>
+                          ) : (
+                            <Link
+                              to={`/users/${teacher.id}/edit`}
+                              className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-teal-600 hover:bg-teal-50 transition"
+                            >
+                              Edit
+                            </Link>
+                          )}
                         </div>
                       </td>
                     </tr>

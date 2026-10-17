@@ -15,6 +15,8 @@ import {
   accountStatusDot,
   accountStatusLabels,
   accountStatusOf,
+  FROZEN_HINT,
+  isFrozen,
 } from '../utils/accountStatus';
 
 // Account actions: [request path suffix, success message].
@@ -301,12 +303,18 @@ export default function UserListPage() {
                           >
                             View
                           </Link>
-                          <Link
-                            to={`/users/${user.id}/edit`}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
-                          >
-                            Edit
-                          </Link>
+                          {isFrozen(user) ? (
+                            <span title={FROZEN_HINT} className="cursor-not-allowed rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-300">
+                              Edit
+                            </span>
+                          ) : (
+                            <Link
+                              to={`/users/${user.id}/edit`}
+                              className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+                            >
+                              Edit
+                            </Link>
+                          )}
                           {user.id === currentUser?.id ? (
                             // The signed-in administrator cannot suspend or deactivate themself.
                             <span className="px-2.5 py-1.5 text-xs font-semibold text-slate-400">You</span>
