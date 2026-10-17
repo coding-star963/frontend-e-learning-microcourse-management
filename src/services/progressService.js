@@ -1,6 +1,11 @@
 import api from './api';
 
 export const progressService = {
+  // Students the viewer may monitor (a teacher: students in their own courses).
+  getStudents(params = {}, config = {}) {
+    return api.get('/progress/students', { params, ...config });
+  },
+
   getStudentProgress(userId) {
     return api.get(`/progress/student/${userId}`);
   },

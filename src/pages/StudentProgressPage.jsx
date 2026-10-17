@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { progressService } from '../services/progressService';
-import api from '../services/api';
 import { useDebounce } from '../hooks/useDebounce';
 import { SearchIcon, ProgressIcon, UsersIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
@@ -36,7 +35,6 @@ export default function StudentProgressPage() {
       setError('');
       try {
         const params = {
-          role: 'student',
           page,
           per_page: 8,
         };
@@ -44,7 +42,7 @@ export default function StudentProgressPage() {
           params.search = debouncedSearch;
         }
 
-        const res = await api.get('/users', { params, signal: controller.signal });
+        const res = await progressService.getStudents(params, { signal: controller.signal });
         if (!controller.signal.aborted) {
           setStudents(res.data.data);
           setPagination(res.data.meta);

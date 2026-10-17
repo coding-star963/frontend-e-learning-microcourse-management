@@ -103,7 +103,8 @@ export default function LessonListPage() {
       const reordered = [...prev];
       const [moved] = reordered.splice(draggedIndex, 1);
       reordered.splice(targetIndex, 0, moved);
-      return reordered;
+      // Match the server, which renumbers lessons 1..n in the new order.
+      return reordered.map((lesson, index) => ({ ...lesson, order: index + 1 }));
     });
 
     try {

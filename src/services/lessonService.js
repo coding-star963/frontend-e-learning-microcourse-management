@@ -1,5 +1,21 @@
 import api from './api';
 
+// Multipart form for lesson create/update. Booleans become '1'/'0' because
+// Laravel's boolean rule rejects the strings 'true'/'false'.
+function toLessonFormData(data, { keepEmpty }) {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === 'video' || key === 'audio') {
+      if (value instanceof File) formData.append(key, value);
+    } else if (typeof value === 'boolean') {
+      formData.append(key, value ? '1' : '0');
+    } else if (value !== null && value !== undefined && (keepEmpty || value !== '')) {
+      formData.append(key, value);
+    }
+  });
+  return formData;
+}
+
 export const lessonService = {
   getAll(courseSlug, params = {}) {
     return api.get(`/courses/${courseSlug}/lessons`, { params });
@@ -10,16 +26,7 @@ export const lessonService = {
   },
 
   create(courseSlug, data) {
-    const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-      if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
-        if ((key === 'video' || key === 'audio') && data[key] instanceof File) {
-          formData.append(key, data[key]);
-        } else {
-          formData.append(key, data[key]);
-        }
-      }
-    });
+    const formData = toLessonFormData(data, { keepEmpty: false });
 
     return api.post(`/courses/${courseSlug}/lessons`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -27,17 +34,9 @@ export const lessonService = {
   },
 
   update(courseSlug, lessonId, data) {
-    const formData = new FormData();
+    // Empty strings are sent too, so optional fields (description, duration...) can be cleared.
+    const formData = toLessonFormData(data, { keepEmpty: true });
     formData.append('_method', 'PUT');
-    Object.keys(data).forEach((key) => {
-      if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
-        if ((key === 'video' || key === 'audio') && data[key] instanceof File) {
-          formData.append(key, data[key]);
-        } else {
-          formData.append(key, data[key]);
-        }
-      }
-    });
 
     return api.post(`/courses/${courseSlug}/lessons/${lessonId}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

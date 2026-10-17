@@ -4,6 +4,7 @@ import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { announcementService } from '../services/announcementService';
 import { useDebounce } from '../hooks/useDebounce';
+import { useAuth } from '../hooks/useAuth';
 import { PlusIcon, SearchIcon, AnnouncementsIcon } from '../components/Icons';
 
 const typeBadge = {
@@ -19,6 +20,9 @@ const typeLabels = {
 };
 
 export default function AnnouncementListPage() {
+  const { user, isAdmin } = useAuth();
+  // Teachers manage only their own announcements; others are read-only.
+  const canManage = (announcement) => isAdmin || announcement.user_id === user?.id;
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -170,12 +174,16 @@ export default function AnnouncementListPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1 pr-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          to={`/announcements/${announcement.id}/edit`}
-                          className="font-bold text-base text-slate-900 hover:text-teal-600 transition-colors"
-                        >
-                          {announcement.title}
-                        </Link>
+                        {canManage(announcement) ? (
+                          <Link
+                            to={`/announcements/${announcement.id}/edit`}
+                            className="font-bold text-base text-slate-900 hover:text-teal-600 transition-colors"
+                          >
+                            {announcement.title}
+                          </Link>
+                        ) : (
+                          <span className="font-bold text-base text-slate-900">{announcement.title}</span>
+                        )}
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ${
                             typeBadge[announcement.type] || 'bg-slate-100 text-slate-600'
@@ -219,6 +227,7 @@ export default function AnnouncementListPage() {
                         )}
                       </div>
                     </div>
+                    {canManage(announcement) && (
                     <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-start">
                       <button
                         onClick={() => handleTogglePublish(announcement)}
@@ -243,6 +252,7 @@ export default function AnnouncementListPage() {
                         Delete
                       </button>
                     </div>
+                    )}
                   </div>
                 </div>
               ))}

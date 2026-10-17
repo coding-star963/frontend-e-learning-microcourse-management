@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { progressService } from '../services/progressService';
-import api from '../services/api';
 
 export default function LearningHistoryPage() {
   const [students, setStudents] = useState([]);
@@ -15,7 +14,7 @@ export default function LearningHistoryPage() {
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        const res = await api.get('/users', { params: { role: 'student', per_page: 100 } });
+        const res = await progressService.getStudents({ per_page: 100 });
         setStudents(res.data.data);
       } catch {
         setError('Failed to load students.');

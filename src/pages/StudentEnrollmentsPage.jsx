@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Alert from '../components/Alert';
 import { enrollmentService } from '../services/enrollmentService';
-import api from '../services/api';
+import { progressService } from '../services/progressService';
+import { useAuth } from '../hooks/useAuth';
 import { getStorageUrl } from '../utils/imageUrl';
 
 const statusColors = {
@@ -15,6 +16,7 @@ const statusColors = {
 
 export default function StudentEnrollmentsPage() {
   const { id } = useParams();
+  const { isAdmin } = useAuth();
   const [student, setStudent] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,12 +32,13 @@ export default function StudentEnrollmentsPage() {
         const params = { page, per_page: 15 };
         if (statusFilter) params.status = statusFilter;
 
-        const [studentRes, enrollmentsRes] = await Promise.all([
-          api.get(`/users/${id}`),
+        // The progress endpoint is open to teachers too (/users is admin-only).
+        const [progressRes, enrollmentsRes] = await Promise.all([
+          progressService.getStudentProgress(id),
           enrollmentService.getStudentEnrollments(id, params),
         ]);
 
-        setStudent(studentRes.data.data);
+        setStudent(progressRes.data.student);
         setEnrollments(enrollmentsRes.data.data);
         setPagination(enrollmentsRes.data.meta);
       } catch {
@@ -65,8 +68,8 @@ export default function StudentEnrollmentsPage() {
         {error && <Alert type="error">{error}</Alert>}
 
         <div>
-          <Link to="/users" className="text-sm text-slate-600 hover:text-teal-600">
-            &larr; Back to users
+          <Link to={isAdmin ? '/users' : '/enrollments'} className="text-sm text-slate-600 hover:text-teal-600">
+            &larr; Back to {isAdmin ? 'users' : 'enrollments'}
           </Link>
         </div>
 
@@ -98,7 +101,7 @@ export default function StudentEnrollmentsPage() {
         <section className="grid grid-cols-2 gap-4 md:grid-cols-3">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-slate-500">Total Enrolled</p>
-            <p className="mt-2 text-2xl font-bold text-slate-950">{enrollments.length}</p>
+            <p className="mt-2 text-2xl font-bold text-slate-950">{pagination?.total ?? enrollments.length}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-slate-500">Active Courses</p>

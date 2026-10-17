@@ -8,6 +8,7 @@ import { courseService } from '../services/courseService';
 import { useDebounce } from '../hooks/useDebounce';
 import { PlusIcon, SearchIcon, EnrollmentsIcon } from '../components/Icons';
 import { getStorageUrl } from '../utils/imageUrl';
+import { GMAIL_ERROR, isGmail } from '../utils/email';
 
 const statusBadge = {
   active: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
@@ -75,9 +76,13 @@ export default function EnrollmentListPage() {
 
   const handleAddEnrollment = async (e) => {
     e.preventDefault();
-    setSaving(true);
     setAddError('');
     setSuccess('');
+    if (addForm.mode !== 'existing' && !isGmail(addForm.email)) {
+      setAddError(GMAIL_ERROR);
+      return;
+    }
+    setSaving(true);
     try {
       const payload = addForm.mode === 'existing'
         ? { user_id: addForm.user_id, course_id: addForm.course_id }
@@ -248,8 +253,9 @@ export default function EnrollmentListPage() {
                         onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
                         required
                         className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
-                        placeholder="student@example.com"
+                        placeholder="student@gmail.com"
                       />
+                      <p className="mt-1 text-xs text-slate-500">Must be a Gmail address (@gmail.com).</p>
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
+import { GMAIL_ERROR, isGmail } from '../utils/email';
 
 const inputClass =
   'mt-2 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100';
@@ -12,6 +13,7 @@ export default function UserEditPage() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [originalEmail, setOriginalEmail] = useState('');
   const [role, setRole] = useState('teacher');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,7 @@ export default function UserEditPage() {
         const user = response.data.data;
         setName(user.name);
         setEmail(user.email);
+        setOriginalEmail(user.email);
         setRole(user.role);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load user.');
@@ -37,6 +40,12 @@ export default function UserEditPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    // Older non-Gmail student emails may stay; a changed one must be Gmail.
+    const changesEmail = email.trim().toLowerCase() !== originalEmail.toLowerCase();
+    if (role === 'student' && changesEmail && !isGmail(email)) {
+      setError(GMAIL_ERROR);
+      return;
+    }
     setSaving(true);
 
     try {
@@ -103,6 +112,9 @@ export default function UserEditPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className={inputClass}
               />
+              {role === 'student' && (
+                <p className="mt-1 text-xs text-slate-500">Student accounts must use a Gmail address (@gmail.com).</p>
+              )}
             </div>
 
             <div>

@@ -4,8 +4,11 @@ import Alert from '../components/Alert';
 import { categoryService } from '../services/courseService';
 import { PlusIcon, CategoriesIcon, SearchIcon } from '../components/Icons';
 import { useDebounce } from '../hooks/useDebounce';
+import { useAuth } from '../hooks/useAuth';
 
 export default function CategoryListPage() {
+  // Categories are shared by every teacher, so only administrators edit or delete them.
+  const { isAdmin } = useAuth();
   const [categories, setCategories] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [page, setPage] = useState(1);
@@ -264,13 +267,14 @@ export default function CategoryListPage() {
                       )}
                       <div className="mt-2 flex items-center gap-2">
                         <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                          {category.courses_count ?? 0} course{(category.courses_count ?? 0) !== 1 ? 's' : ''} assigned
+                          {category.courses_count ?? 0} {isAdmin ? '' : 'of your '}course{(category.courses_count ?? 0) !== 1 ? 's' : ''} assigned
                         </span>
                         <span className="text-xs text-slate-400">&bull;</span>
                         <span className="text-xs text-slate-400 font-mono">/{category.slug}</span>
                       </div>
                     </div>
                   </div>
+                  {isAdmin && (
                   <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
                     <button
                       onClick={() => handleEdit(category)}
@@ -285,6 +289,7 @@ export default function CategoryListPage() {
                       Delete
                     </button>
                   </div>
+                  )}
                 </div>
               ))}
             </div>

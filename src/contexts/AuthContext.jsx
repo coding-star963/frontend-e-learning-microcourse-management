@@ -27,6 +27,8 @@ function useAuthState() {
     const response = await api.post('/login', { email, password });
     const { user: userData, token } = response.data;
     if (userData.role === 'student') {
+      // Revoke the token that was just issued; students use the mobile app.
+      await api.post('/logout', null, { headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
       throw {
         response: {
           data: {

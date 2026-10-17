@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
 import AppShell from '../components/AppShell';
+import { GMAIL_ERROR, isGmail } from '../utils/email';
 
 const inputClass =
   'mt-2 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-100';
@@ -24,6 +25,10 @@ export default function UserCreatePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (role === 'student' && !isGmail(email)) {
+      setError(GMAIL_ERROR);
+      return;
+    }
     setLoading(true);
 
     try {
@@ -88,8 +93,11 @@ export default function UserCreatePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={inputClass}
-                placeholder="you@example.com"
+                placeholder={role === 'student' ? 'name@gmail.com' : 'you@example.com'}
               />
+              {role === 'student' && (
+                <p className="mt-1 text-xs text-slate-500">Student accounts must use a Gmail address (@gmail.com).</p>
+              )}
             </div>
 
             <div>
